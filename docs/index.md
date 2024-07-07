@@ -1,11 +1,12 @@
 # Intoduction
-**Q**uery **L**anguage is an attempt to informally define a grammar for a next-gen programming language. It can also behave as a SQL transpiler. The premise is that nearly all computations on a modern day computer can be described using a series of SQL-like queries that are composable. Operations which cannot be easily performed in QL are best left done in another programming language. The hope of this specification is reduce the overall number of situations where QL cannot be used, defining a general-purpose language that suits all purposes.
+**Q**uery **L**anguage is an attempt to informally define a grammar for a next-gen programming language. It can also behave as a SQL transpiler. The premise is that nearly all computations on a modern day computer can be described using a series of SQL-like queries that are composable. Operations which cannot be easily performed in QL are best left done in another programming language. The hope of this specification is reduce the overall number of situations where QL cannot be used, defining a general-purpose language that is suitable for the majority of software development.
 
-Those familiar with SQL, functional programming, or vector programming concepts should feel right at home. For those coming from a procedural programming background, it might take some getting used to.
+Those familiar with SQL, functional programming, or vector programming (e.g., R) concepts should feel right at home. For those coming from a procedural programming background, it might take some getting used to.
 
 # Table of contents
 1. [Introduction](#intoduction)
 2. [In-memory sources](#in-memory-sources)
+    * [Empty collections and null](#empty-collections-and-null)
     * [Concatenating](#concatenating)
     * [Querying](#querying)
     * [Splicing](#splicing) 
@@ -22,17 +23,41 @@ An in-memory collection can be defined using the `[]` syntax. For example:
 let values = [1, 2, 3];
 ```
 
-This defines a collection with 3-elements: `1`, `2`, and `3`. This should be familiar to anyone who has worked in most other programming languages.
+This defines a collection with 3 elements: `1`, `2`, and `3`.
+
+Items can be retrieved from the collection using the `[]` operator:
+```
+let first = values[0];  # 1
+let second = values[1]; # 2
+let third = values[2];  # 3  
+```
+
+The `#` symbol indicates a comment. These are ignored by the compiler. They last until the end of the current line.
+
+## Empty collections and null
+An empty collection would look like this:
+```
+let empty = []; # compiles
+```
+
+Without values to initialize a collection, its type is determined to be `null`. A `null` can be used in the context of any other type. To give a collection an explicit type, the following syntax is used:
+```
+let empty: i32 = [];
+```
+
+This collection can only be used where a collection of 32-bit integers are expected. More on `i32` when we discuss primitive types. 
+
+> **NOTE:** The collection above can also be declared using the following syntax `let empty: [i32] = [];`. More on this when we discuss multi-dimensional collections.
 
 ## Concatenating
-Collections created with `[]` are immutable by default. This means the contents of a collection cannot be updated or deleted once created.
+Collections created with `[]` are immutable by default. This means the contents of a collection cannot be updated or deleted once initialized.
 
-Adding a new item can be accomplished using the `append` operation. This results in a new collection:
+Appending to a collection can be achieved using the `append` operation. This results in a new collection:
 ```
 let values = values append 4; # produces [1, 2, 3, 4]
 ```
 
-Notice that we reassign `values`; this shadows the previous variable, making it inaccessible in the rest of the scope. The `#` symbol indicates a comment.
+Notice that we reassign `values`; this *shadows* the previous variable, making it inaccessible in the rest of the scope.
 
 ## Querying
 The values in a collection can be queried using a query. We will go much more into what a query looks like later on. For now, this is a very basic example:
@@ -42,6 +67,8 @@ let evens =
     where v % 2 == 0
     select v;         # produces [2, 4] 
 ```
+
+> **NOTE:** A query is lazily evaluated, meaning it will not produce `[2, 4]` until the values are actually retrieved.
 
 ## Splicing
 A new collection can also be created using splices. Here are some example splices:
@@ -54,16 +81,45 @@ let e = values[0..:2] # produces [1, 3]
 let f = values[..:-1] # produces [4, 3, 2, 1]
 ```
 
+The previous example that assigns `first`, `second`, and `third` can be more succinctly written:
+```
+let first, second, third = values[0..2];
+```
+
+The number of elements in the range must match the number of variables being defined; otherwise, an error occurs.
+
+The following is also legal, so long as the collection is not be empty:
+```
+let first, ..remaining = values;
+```
+
+If `remaining` is unused, it can be replaced with `_` to be ignored:
+```
+let first, .._ = values;
+```
+
+Finally, if the number of elements in a collection is unknown, the `?` operator can be used to indicate the value is optional:
+```
+let first?, .._ = values; # values may be empty
+```
+
+A check must be performed on optional variables before accessing their values. The `??` operator can also be used to provide a default value when needed:
+```
+let first = first ?? 0;
+``` 
+
 ## Mutable collections
 A mutable collection can be created using the `mut` keyword:
 ```
-let values = mut [];
+let values: i32 = mut [];
 ```
 
-A `mut` collection can be added to, updated, or removed from.
+A `mut` collection can be added to, updated, or removed from. 
+
+> **NOTE:** There is no mutable variant of `null`, so a type must be specified if it cannot be infered.
 
 ## Appending values
-Values can be inserted onto the end of `values` using an insert command.
+Values can be inserted onto the end of `values` using an insert command:
 ```
 from [1, 2, 3, 4] as v
 select v
