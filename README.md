@@ -1,4 +1,4 @@
 # Query Language
-An experimental specification for a general-purpose query language.
+A query language for everyday programming tasks.
 
 See the docs here: https://jehugaleahsa.github.io/ql/
