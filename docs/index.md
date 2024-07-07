@@ -6,6 +6,7 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
 # Table of contents
 1. [Introduction](#intoduction)
 2. [Table of contents](#table-of-contents)
+3. [Quick Start](#quick-start)
 3. [In-memory sources](./in-memory-sources.md#in-memory-sources)
     * [Empty collections and null](./in-memory-sources.md#empty-collections-and-null)
     * [Concatenating](./in-memory-sources.md#concatenating)
@@ -15,3 +16,48 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
     * [Appending values](./in-memory-sources.md#appending-values)
     * [Updating values](./in-memory-sources.md#updating-values)
     * [Deleting values](./in-memory-sources.md#deleting-values)
+
+# Quick Start
+For this quick start, assume we have customers with orders, and those orders are made up of items.
+
+```
+# Retrieve all customers
+from customers as c
+select c;
+```
+
+```
+# Retrieve a specific customer
+from customers as c
+where c.id == 123
+select c;
+```
+
+```
+# Count the number of orders per customer
+from customers as c
+join orders as o on c.id == o.customerId
+group o by c as g
+aggregate {
+    customer: g.c,
+    count: count(g)
+};
+```
+
+```
+# Delete customers without any orders
+from customers as c
+let hasOrders =
+    from orders as o
+    where o.customerId == c.id
+    aggregate any(o)
+where not hasOrders
+delete c;
+```
+
+```
+# Update orders with 20% coupon
+from orders as o
+where o.id == 123
+update o { amount: o.amount * .8, discount: .2 };
+```
