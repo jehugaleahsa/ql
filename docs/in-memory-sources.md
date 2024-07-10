@@ -17,7 +17,7 @@ let third = values[2];  # 3
 
 The `#` symbol indicates a comment. These are ignored by the compiler. They last until the end of the current line.
 
-## Empty collections and null
+## Empty collections and `null`
 An empty collection would look like this:
 ```
 let empty = []; # compiles
@@ -28,7 +28,7 @@ Without values to initialize a collection, its type is determined to be `null`. 
 let empty: i32 = [];
 ```
 
-This collection can only be used where a collection of 32-bit integers are expected. More on `i32` when we discuss primitive types. 
+This collection can only be used where a collection of 32-bit integers are expected. More on `i32` when we discuss [primitive types](./primitive-types.md). 
 
 > **NOTE:** The collection above can also be declared using the following syntax `let empty: [i32] = [];`. More on this when we discuss multi-dimensional collections.
 

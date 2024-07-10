@@ -1,5 +1,5 @@
 # Intoduction
-**Q**uery **L**anguage is an attempt to informally define a grammar for a next-gen programming language. It can also behave as a SQL transpiler. The premise is that nearly all computations on a modern day computer can be described using a series of SQL-like queries that are composable. Operations which cannot be easily performed in QL are best left done in another programming language. The hope of this specification is reduce the overall number of situations where QL cannot be used, defining a general-purpose language that is suitable for the majority of software development.
+**Q**uery **L**anguage is an attempt to informally define a grammar for a next-gen programming language. It can also behave as a SQL transpiler. The premise is that nearly all computations on a modern day computer can be described using a series of SQL-like queries that are composable. The hope of this specification is to define a general-purpose language that is suitable for the daily programming activities.
 
 Those familiar with SQL, functional programming, or vector programming (e.g., R) concepts should feel right at home. For those coming from a procedural programming background, it might take some getting used to.
 
@@ -16,6 +16,19 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
     * [Appending values](./in-memory-sources.md#appending-values)
     * [Updating values](./in-memory-sources.md#updating-values)
     * [Deleting values](./in-memory-sources.md#deleting-values)
+5. [Primitive Types](./primitive-types.md)]
+    * [Literals](./primitive-types.md#literals)
+        * [Underscore separators](./primitive-types.md#underscore-separators)
+    * [Text and strings](./primitive-types.md#text-and-strings)
+        * [Escape sequences](./primitive-types.md#escape-sequences)
+        * [Raw strings](primitive-types.md#raw-strings)
+    * [Conversion](./primitive-types.md#conversion)
+        * [Overflow/Underflow](./primitive-types.md#overflowunderflow)
+        * [Unicode checks](./primitive-types.md#unicode-checks)
+6. [Vectors](./vectors.md)
+    * [Dimensions and broadcasting](./vectors.md#dimensions-and-broadcasting)
+    * [Null](./vectors.md#null)
+        * [Lifted arithmetic operations](./vectors.md#lifted-arithmetic-operations)
 
 # Quick Start
 For this quick start, assume we have customers with orders, and those orders are made up of items.
@@ -37,7 +50,7 @@ select c;
 # Count the number of orders per customer
 from customers as c
 join orders as o on c.id == o.customerId
-group o by c as g
+group by c as g
 aggregate {
     customer: g.c,
     count: count(g)
@@ -45,19 +58,8 @@ aggregate {
 ```
 
 ```
-# Delete customers without any orders
-from customers as c
-let hasOrders =
-    from orders as o
-    where o.customerId == c.id
-    aggregate any(o)
-where not hasOrders
-delete c;
-```
-
-```
-# Update orders with 20% coupon
+# Apply 20% coupon to an order
 from orders as o
 where o.id == 123
-update o { amount: o.amount * .8, discount: .2 };
+update o { amount: o.amount * .8 };
 ```
