@@ -28,9 +28,7 @@ Without values to initialize a collection, its type is determined to be `null`. 
 let empty: i32 = [];
 ```
 
-This collection can only be used where a collection of 32-bit integers are expected. More on `i32` when we discuss [primitive types](./primitive-types.md). 
-
-> **NOTE:** The collection above can also be declared using the following syntax `let empty: i32 = [];`. More on this when we discuss [multi-dimensional collections](./vectors.md).
+This collection can only be used where a collection of 32-bit integers are expected. More on `i32` when we discuss [primitive types](./primitive-types.md).
 
 ## Concatenating
 Collections created with `[]` are immutable by default. This means the contents of the collection cannot be updated or deleted once initialized.
@@ -71,19 +69,19 @@ let first, second, third = values[0..2];
 
 The number of elements in the range must match the number of variables being defined; otherwise, an error occurs.
 
-The following is also legal, so long as the collection is not be empty:
+The following is also legal, so long as the collection is not empty:
 ```
-let first, ..remaining = values;
+let first, ...remaining = values;
 ```
 
 If `remaining` is unused, it can be replaced with `_` to be ignored:
 ```
-let first, .._ = values;
+let first, ..._ = values;
 ```
 
 Finally, if the number of elements in a collection is unknown, the `?` operator can be used to indicate the value is optional:
 ```
-let first?, .._ = values; # values may be empty
+let first?, ..._ = values; # values may be empty
 ```
 
 A check must be performed on optional variables before accessing their values. The `??` operator can also be used to provide a default value when needed:
@@ -99,10 +97,10 @@ let values: i32 = mut [];
 
 A `mut` collection can be added to, updated, or removed from. 
 
-> **NOTE:** There is no mutable variant of `null`, so a type must be specified if it cannot be infered.
+> **NOTE:** There is no mutable variant of `null`, so a type must be specified if it cannot be inferred.
 
 ## Appending values
-Values can be inserted onto the end of `values` using an insert command:
+Values can be inserted onto `values` using an insert command:
 ```
 from [1, 2, 3, 4] as v
 select v

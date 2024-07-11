@@ -5,13 +5,13 @@ QL supports the following primitive types:
 * `i32` - A 32-bit signed integer
 * `i64` - A 64-bit signed integer
 * `i128` - A 128-bit signed integer (where available)
-* `isize` - A signed integer the size of a pointer on the current architecture.
+* `isize` - A signed integer the size of a pointer on the current hardware architecture
 * `u8` - An 8-bit unsigned integer
 * `u16` - A 16-bit unsigned integer
 * `u32` - A 32-bit unsigned integer
 * `u64` - A 64-bit unsigned integer
 * `u128` - A 128-bit unsigned integer (where available)
-* `usize` - An unsigned integer the size of a pointer on the current architecture.
+* `usize` - An unsigned integer the size of a pointer on the current hardware architecture
 * `f32` - A 32-bit floating point ([IEEE 754](https://en.wikipedia.org/wiki/IEEE_754))
 * `f64` - A 64-bit floating point ([IEEE 754](https://en.wikipedia.org/wiki/IEEE_754))
 * `f128` - A 128-bit floating point ([IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)) (where available)
@@ -30,6 +30,11 @@ When a floating point literal appears by itself, such as:
 let x = 3.14;
 ```
 The type defaults to `f64`.
+
+Floating point literals can include exponents (scientific notation):
+```
+let x = 2.8e16;
+```
 
 Floating point values also support additional literals:
 * `NaN` - A special value represent a non-numeric value

@@ -67,7 +67,7 @@ from c.orders as o
 select { customerId: c.id, orderId: o.id };
 ```
 
-The nested entities can be selected, as well:
+Nested entities can be selected, as well:
 ```
 from customers as c
 select {
@@ -93,7 +93,7 @@ Multiple `where` operations can appear in the same query. For example, two `wher
 let loyalCustomersWithOpenOrders =
     from customers as c
     where c.isLoyal
-    join orders as o on c.id == o.customerId
+    from c.orders as o
     where o.status != 'closed'
     select { customer: c };
 ```
@@ -115,7 +115,7 @@ select c;
 > **NOTE:** The same cannot be said for `or`.
 
 ## Join
-Not all sources will store related information in nested properties, like in our previous example. Some sources, like relational database sources, will store customers and orders separately, using IDs to link related records.
+Not all sources will store related information in nested properties, like in our previous examples. Some sources, like relational database sources, will store customers and orders separately, using IDs to link related records.
 
 For the next example, assume we have a `customer` source and an `order` source, but this time `order` has a `customerId` property for linking back to a customer. In that case, we can use a `join` operation to match customers and orders together using the `customerId` property:
 ```
@@ -140,12 +140,10 @@ left join orders as o on c.id == o.customerId
 select { customer: c, order: o };
 ```
 
-> **NOTE:** QL has no equivalent to `RIGHT OUTER JOIN` or `FULL OUTER JOIN` in SQL. See [below](#outer-joins) for more details.
-
 ## Outer joins
-Above, we briefly mentioned simulating SQL's `RIGHT` and `FULL OUTER JOIN`s. Now that we have covered `where`, we can show a full example. 
+There is no equivalent of SQL's `RIGHT OUTER JOIN` and `FULL OUTER JOIN`, but we will show how to simulate them.
 
-A `RIGHT OUTER JOIN` is achieved by reversing the `from` and the `join` in this example:
+A `RIGHT OUTER JOIN` is achieved by reversing the `from` and the `join`:
 ```
 from orders as o
 left join customers as c on c.id == o.customerId
@@ -165,4 +163,4 @@ let os =
 let result = cs union os by customer.id, order.id;
 ```
 
-The important take away is that the equivalent of a `FULL OUTER JOIN` requires looping over the collections twice, as well as a way of `union`-ing the results. Unlike SQL, QL has no guarantee that it can uniquely identify `customer` or `order` entities. Therefore, the `by` clause specifies which properties to uniquely identify records using.
+The important take away is that the equivalent of a `FULL OUTER JOIN` requires looping over the collections twice, as well as a way of `union`-ing the results. Unlike SQL, QL has no guarantee that it can uniquely identify `customer` or `order` entities. Therefore, the `by` clause specifies which properties to uniquely identify records.

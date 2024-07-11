@@ -16,7 +16,7 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
     * [Appending values](./in-memory-sources.md#appending-values)
     * [Updating values](./in-memory-sources.md#updating-values)
     * [Deleting values](./in-memory-sources.md#deleting-values)
-5. [Primitive Types](./primitive-types.md)]
+5. [Primitive Types](./primitive-types.md)
     * [Literals](./primitive-types.md#literals)
         * [Underscore separators](./primitive-types.md#underscore-separators)
     * [Text and strings](./primitive-types.md#text-and-strings)
