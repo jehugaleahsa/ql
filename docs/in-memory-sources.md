@@ -30,20 +30,20 @@ let empty: i32 = [];
 
 This collection can only be used where a collection of 32-bit integers are expected. More on `i32` when we discuss [primitive types](./primitive-types.md). 
 
-> **NOTE:** The collection above can also be declared using the following syntax `let empty: [i32] = [];`. More on this when we discuss multi-dimensional collections.
+> **NOTE:** The collection above can also be declared using the following syntax `let empty: i32 = [];`. More on this when we discuss [multi-dimensional collections](./vectors.md).
 
 ## Concatenating
-Collections created with `[]` are immutable by default. This means the contents of a collection cannot be updated or deleted once initialized.
+Collections created with `[]` are immutable by default. This means the contents of the collection cannot be updated or deleted once initialized.
 
 Appending to a collection can be achieved using the `append` operation. This results in a new collection:
 ```
-let values = values append 4; # produces [1, 2, 3, 4]
+let values = values append [4]; # produces [1, 2, 3, 4]
 ```
 
-Notice that we reassign `values`; this *shadows* the previous variable, making it inaccessible in the rest of the scope.
+> **NOTE:** that we reassign `values`; this *shadows* the previous variable, making it inaccessible in the rest of the scope.
 
 ## Querying
-The values in a collection can be queried using a query. We will go much more into what a query looks like later on. For now, this is a very basic example:
+The values in a collection can be queried using a query. We will go much more into what a query looks like [later on](./queries.md). For now, this is a very basic example:
 ```
 let evens = 
     from values as v

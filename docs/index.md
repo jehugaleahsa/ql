@@ -29,6 +29,14 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
     * [Dimensions and broadcasting](./vectors.md#dimensions-and-broadcasting)
     * [Null](./vectors.md#null)
         * [Lifted arithmetic operations](./vectors.md#lifted-arithmetic-operations)
+7. [Queries](./queries.md)
+    * [From](./queries.md#from)
+    * [Select](./queries.md#select)
+    * [Where](./queries.md#where)
+    * [Join](./queries.md#join)
+    * [Left join](./queries.md#left-join)
+    * [Outer joins](./queries.md#outer-joins)
+8. [Combining Collections](./combining-collections.md)
 
 # Quick Start
 For this quick start, assume we have customers with orders, and those orders are made up of items.

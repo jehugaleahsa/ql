@@ -22,7 +22,7 @@ However, the behavior changes when working with higher-dimension vectors. For ex
 [[1, 2], [3, 4]] append [[5, 6]] # [[1, 2], [3, 4], [5, 6]]
 ```
 
-> **NOTE:** To avoid confusion, it often makes sense to wrap literals in `[]` when planning on performing vector operations on them. Therefore, `[1] append [2]` is to be preferred over `1 append 2` even though it is less typing.
+> **NOTE:** To avoid confusion, it often makes sense to wrap literals in `[]` when planning on performing vector operations on them. Therefore, `[1] append [2]` is to be preferred over `1 append 2` even though it is more typing.
 
 Arithmetic operations can be applied to vectors with different dimensions. For example:
 ```
@@ -41,6 +41,8 @@ null append [1, 2, 3] # [1, 2, 3]
 ```
 
 The `null` vector is *all* types and *no* types at the same time. For example, you can append `null` to a vector of strings and a vector of integers - the result is the same - nothing happens. Therefore, `null` can appear almost anywhere `null` is allowed.
+
+> **NOTE:** Unlike SQL, `null == null` returns `true` in QL.
 
 When declaring a variable (with `let`), the type can be specifed explicitly:
 ```
