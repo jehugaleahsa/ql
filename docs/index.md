@@ -36,7 +36,15 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
     * [Join](./queries.md#join)
     * [Left join](./queries.md#left-join)
     * [Outer joins](./queries.md#outer-joins)
-8. [Combining Collections](./combining-collections.md)
+8. [Entities](./entities.md)
+    * [Traits](./entities.md#traits)
+9. [Combining Collections](./combining-collections.md)
+    * [Append](./combining-collections.md#append)
+    * [Union](./combining-collections.md#union)
+    * [Intersect](./combining-collections.md#intersect)
+    * [Except](./combining-collections.md#except)
+10. [Functions](./functions.md)
+11. [Generics](./generics.md)
 
 # Quick Start
 For this quick start, assume we have customers with orders, and those orders are made up of items.
