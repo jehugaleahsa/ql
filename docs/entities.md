@@ -5,19 +5,19 @@ An entity is composed of named properties, and each property has a type. For exa
 ```
 let Customer = type {
     id: i32,
-    name: string,
-    address: string
+    name: String,
+    address: String
 };
 ```
 
 Now imagine we realize that addresses are more complicated. We can create an entity for addresses, like so:
 ```
 let Address = type {
-    line1: string,
-    line2: string?,
-    municipality: string,
-    region: string,
-    postalCode: string
+    line1: String,
+    line2: String?,
+    municipality: String,
+    region: String,
+    postalCode: String
 };
 ```
 
@@ -27,7 +27,7 @@ Now, we can update our `Customer` entity to look like this:
 ```
 let Customer = type {
     id: i32,
-    name: string,
+    name: String,
     address: Address
 };
 ```
@@ -76,7 +76,7 @@ let DBModel = type {
 Now we can redefine `Customer` to be a type of `DBModel`:
 ```
 let Customer = type DBModel {
-    name: string,
+    name: String,
     address: Address
 };
 ```

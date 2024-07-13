@@ -44,6 +44,7 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
     * [Intersect](./combining-collections.md#intersect)
     * [Except](./combining-collections.md#except)
 10. [Functions](./functions.md)
+    * [Varargs](./functions.md#varargs)
 11. [Generics](./generics.md)
 
 # Quick Start
