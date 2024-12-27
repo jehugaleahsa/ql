@@ -35,7 +35,7 @@ Collections created with `[]` are immutable by default. This means the contents 
 
 Appending to a collection can be achieved using the `append` operation. This results in a new collection:
 ```
-let values = values append [4]; # produces [1, 2, 3, 4]
+let values = append values [4]; # produces [1, 2, 3, 4]
 ```
 
 > **NOTE:** that we reassign `values`; this *shadows* the previous variable, making it inaccessible in the rest of the scope.
@@ -100,14 +100,14 @@ A `mut` collection can be added to, updated, or removed from.
 > **NOTE:** There is no mutable variant of `null`, so a type must be specified if it cannot be inferred.
 
 ## Appending values
-Values can be inserted onto `values` using an insert command:
+Values can be inserted onto `values` using the `into` keyword:
 ```
 from [1, 2, 3, 4] as v
 select v
 into values;
 ```
 
-The `into` keyword specifies the target for a query. A target is anything that is appendable, such as an in-memory collection.
+The `into` keyword specifies the target for a query. A target is anything that is appendable, such as a mutable in-memory collection.
 
 ## Updating values
 Values can be updated in-place using the `update` operation:
@@ -117,7 +117,14 @@ where values % 2 == 0
 update v (v + 1); # produces [1, 3, 3, 5]
 ```
 
-After the `update` keyword, the next value (`v`) is the value being updated. After that is the new value (`v + 1`). This get more interesting when working with more complex types.
+After the `update` keyword, the next value is assigned to a variable (named `v` here). After that is the new value (`v + 1` here). This get more interesting when working with a complex type:
+```
+from customer as c
+where c.id == 123
+update c { ...c, firstName: "Bob" };
+```
+
+Here, we are saying replace the first name of the customer whose `id == 123` with `"Bob"`. 
 
 ## Deleting values
 Values can also be removed in-place, using the `delete` operation:

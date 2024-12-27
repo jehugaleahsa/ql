@@ -86,3 +86,60 @@ Zero, one, or more traits can be listed after the `type` keyword, separated by c
 In the example above, since `DBModel` already defines an `id` property, it does not need to be repeated in `Customer`.
 
 > **NOTE:** QL doesn't support the classical notion of inheritance, as found in object-oriented programming languages. Many of the more useful features are supported, however.
+
+## Anonymous types
+Within [queries](./queries.md), defining anonymous types is quite common. For example:
+```
+from customer as c
+select {
+    id: c.id,
+    firstName: c.firstName
+};
+```
+
+Here, we are creating an anonymous type from a `Customer` with only two properties, `id` and `firstName`. The types of `id` and `firstName` are inferred automatically, including whether a `null` is possible. Being anonymous, these types cannot be constructed outside of a query by name.
+
+When an anonymous type is used in a `using` operation, an `equals` implementation is provided automatically using all the values. For example:
+```
+union newCustomers oldCustomers using { firstName, lastName };
+```
+
+Here, we are creating an anonymous type from the `firstName` and `lastName` properties of a `Customer`, and equality will be implemented automatically by comparing the first and last name (i.e., by comparing each string value).
+
+## Copying
+In many operations, it's easier to assume entities are immutable. Instead of directly updating a property, you can make a copy of an object, changing the value of individual properties instead:
+```
+let customer: Customer = {
+    id: 123,
+    firstName: "Bob",
+    lastName: "Smith",
+    age: 23
+};
+let updated: Customer = {
+    ...customer,
+    age: 24
+};
+```
+
+After this operation, `customer` and `updated` will have all the same values, except `updated`'s `age` will be `24` instead of `23`. This same syntax should be used as a short-hand inside [update operations](./in-memory-sources.md#updating-values).
+
+For nested properties, copying can be a little more verbose:
+```
+let customer: Customer = {
+    id: 123,
+    firstName: "Bob",
+    lastName: "Smith",
+    address: {
+        line1: "123 Palm Beach",
+        state: "CA",
+        zip: "55555"
+    }
+};
+let updated: Customer = {
+    ...customer,
+    address: {
+        ...customer.address,
+        zip: "56789"
+    }
+};
+```

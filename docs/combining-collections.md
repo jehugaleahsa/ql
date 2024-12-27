@@ -13,6 +13,8 @@ let second = [4, 5, 6];
 let combined = append first second; # [1, 2, 3, 4, 5, 6]
 ```
 
+> The same effect can be achieved more succinctly using `[...first, ...second]`.
+
 ## Union
 The unique values that appear among collections can be retrieve using the `union` operation. No duplicates will be returned:
 ```
