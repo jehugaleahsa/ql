@@ -1,7 +1,7 @@
 # Vectors
-In QL, there are no scalar values. In other words, literals such as `1`, `true`, and `3.14` are actually just vectors (or collections) with one element, and could also be written as `[1]`, `[true]`, and `[3.14]`.
+In QL, you can think of scalar values as vectors (or collections) containing one element. In other words, literals such as `1`, `true`, and `3.14` can be treated as `[1]`, `[true]`, and `[3.14]`. Values are promoted to vectors automatically.
 
-When adding, subtracting, etc., these operations are vectorized. Consider this example:
+When adding, subtracting, etc., operations are vectorized. Consider this example:
 ```
 let evens = [0, 2, 4, 6, 8];
 let odds = [1, 3, 5, 7, 9];
@@ -15,14 +15,14 @@ Here, you can see addition is performed element-wise over the two collections.
 ## Dimensions and broadcasting
 The literal `1` and `[1]` equate to the same value.
 
-For example, the `append` operation concatenates two vectors (or collections), such that `1 append 2` results in the vector `[1, 2]`. Similarly, `[1] append [2]` results in `[1, 2]`.
+For example, the `append` operation concatenates two vectors (or collections), such that `append 1 2` results in the vector `[1, 2]`. Similarly, `append [1] [2]` results in `[1, 2]`.
 
 However, the behavior changes when working with higher-dimension vectors. For example:
 ```
-[[1, 2], [3, 4]] append [[5, 6]] # [[1, 2], [3, 4], [5, 6]]
+append [[1, 2], [3, 4]] [[5, 6]] # [[1, 2], [3, 4], [5, 6]]
 ```
 
-> **NOTE:** To avoid confusion, it often makes sense to wrap literals in `[]` when planning on performing vector operations on them. Therefore, `[1] append [2]` is to be preferred over `1 append 2` even though it is more typing.
+> **NOTE:** To avoid confusion, it often makes sense to wrap literals in `[]` when planning on performing vector operations on them. Therefore, `append [1] [2]` is to be preferred over `append 1 2` even though it is more typing.
 
 Arithmetic operations can be applied to vectors with different dimensions. For example:
 ```
@@ -36,8 +36,8 @@ The empty vector (a.k.a., a collection with no elements) is represented using th
 
 Appending `null` is a no-op, returning the original vector:
 ```
-[1, 2, 3] append null # [1, 2, 3]
-null append [1, 2, 3] # [1, 2, 3]
+append [1, 2, 3] null # [1, 2, 3]
+append null [1, 2, 3] # [1, 2, 3]
 ```
 
 The `null` vector is *all* types and *no* types at the same time. For example, you can append `null` to a vector of strings and a vector of integers - the result is the same - nothing happens. Therefore, `null` can appear almost anywhere `null` is allowed.
@@ -72,4 +72,4 @@ let bad = "12abc";      # this won't parse
 i32::tryParse(bad) + 23 # null
 ```
 
-Many functions are also designed to return `null` when passed `null` values. Arithmetic functions are just a form of function.
+Many functions are also designed to return `null` when passed `null` values. Arithmetic functions are just another form of function.

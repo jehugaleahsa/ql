@@ -6,7 +6,7 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
 # Table of contents
 1. [Introduction](#intoduction)
 2. [Table of contents](#table-of-contents)
-3. [Quick Start](#quick-start)
+3. [Quick Start](./quick-start.md#quick-start)
 4. [In-memory sources](./in-memory-sources.md#in-memory-sources)
     * [Empty collections and null](./in-memory-sources.md#empty-collections-and-null)
     * [Concatenating](./in-memory-sources.md#concatenating)
@@ -36,6 +36,9 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
     * [Join](./queries.md#join)
     * [Left join](./queries.md#left-join)
     * [Outer joins](./queries.md#outer-joins)
+    * [Grouping](./queries.md#grouping)
+        * [Aggregation](./queries.md#aggregation)
+        * [Keys](./queries.md#keys)
 8. [Entities](./entities.md)
     * [Traits](./entities.md#traits)
 9. [Combining Collections](./combining-collections.md)
@@ -46,37 +49,3 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R)
 10. [Functions](./functions.md)
     * [Varargs](./functions.md#varargs)
 11. [Generics](./generics.md)
-
-# Quick Start
-For this quick start, assume we have customers with orders, and those orders are made up of items.
-
-```
-# Retrieve all customers
-from customers as c
-select c;
-```
-
-```
-# Retrieve a specific customer
-from customers as c
-where c.id == 123
-select c;
-```
-
-```
-# Count the number of orders per customer
-from customers as c
-join orders as o on c.id == o.customerId
-group by c as g
-aggregate {
-    customer: g.c,
-    count: count(g)
-};
-```
-
-```
-# Apply 20% coupon to an order
-from orders as o
-where o.id == 123
-update o { amount: o.amount * .8 };
-```

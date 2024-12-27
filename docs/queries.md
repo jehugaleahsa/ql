@@ -164,3 +164,92 @@ let result = cs union os by customer.id, order.id;
 ```
 
 The important take away is that the equivalent of a `FULL OUTER JOIN` requires looping over the collections twice, as well as a way of `union`-ing the results. Unlike SQL, QL has no guarantee that it can uniquely identify `customer` or `order` entities. Therefore, the `by` clause specifies which properties to uniquely identify records.
+
+## Grouping
+Groups can be formed using the `group by` keywords. When grouping, you must identify what entities are being grouped and what the key (unique value) is to group them by. For example:
+```
+let nameGroups = 
+    from customers as c
+    group c by c.firstName;
+```
+
+Here we are grouping all customers by their `firstName` value. If we had customers like:
+
+* Sue Smith
+* Tom Harris
+* Sue Williams
+* Bob Thomas
+
+We'd end up with a group for "Sue", "Tom", and "Bob" with two customers under "Sue":
+
+* Sue - [Sue Smith, Sue Williams]
+* Tom - [Tom Harris]
+* Bob - [Bob Thomas]
+
+> Notice that the results of a `group by` can be assigned to a variable. This allows you to reuse groups if necessary, or to break up large operations.
+
+The result of a `group by` operation is a list of `Grouping<K, V>` objects, where `K` is the type of the key (what you're grouping by) and where `V` is what each group contains. The type of `K` and `V` is inferred automatically from the value that appears after the `group` and `by` keywords, respectively.
+
+A `Grouping` is a type of vector with an additional `key` property. Whatever expression appears after the `by` is used to populate the `key` value for each group.
+
+In the example above, we are grouping the entire customer (`c`) by its `firstName` attribute. The group for "Sue" will have two items (customers) and the `key` will equal `"Sue"`.
+
+Things can get more interesting when multiple entities are joined together. For example:
+```
+let ordersByCustomer = 
+    from customer as c
+    join order as o on c.id = o.customerId
+    group o by c;
+```
+
+In this example, we are grouping the orders by their customers. Since we put `o` after the `group` keyword, the values in the `Grouping` will be orders.
+
+### Aggregation
+Here's how we can count the orders for each customer:
+```
+let customerOrderCounts =
+    from customer as c
+    join order as o on c.id = o.customerId
+    group o by c as g
+    aggregate {
+        customer: g.key,
+        orderCount: count(g)
+    };
+```
+
+First, notice we provide an alias for the group, `g`. We use this in the `aggregate` operation below.
+
+An `aggregate` operation takes the list of `Grouping` objects produced from a `group by` and combines each into a single result.
+
+As you can see, if we want to access the customer information (what we grouped by), we use the `key` property on the group.
+
+### Keys
+Be sure the value(s) you group by have a notion of "equality". For example, a database library may ensure that only a single instance of a record exists in memory for each row in the database, using the primary key under the hood to uniquely identify each record. In that case, "equality" will be based on identity (the location of the record in memory).
+
+Other types, such as primitive values and strings, have a default meaning for "equals" which probably match you're expectations. If you need more control over the way grouping occurs, you have a few choices:
+```
+let ordersByCustomerId =
+    from customer as c
+    join order as o on c.id = o.customerId
+    group o by { c.id } as g
+    aggregate {
+        customerId: g.key
+        orderCount: count(g)
+    };
+```
+
+Notice we lose access to the customer using this approach. If you need access to the full customer, you can use the `using` keyword, like so:
+```
+let ordersByCustomerId =
+    from customer as c
+    join order as o on c.id = o.customerId
+    group o by c using { id } as g
+    aggregate {
+        customer: g.key
+        orderCount: count(g)
+    };
+```
+
+So, even if your record type doesn't support "equality" by default, you an control how grouping behaves.
+
+> Notice that you cannot qualify the `id` property by `c`, like `c.id`. You can only access properties of the object you are grouping by.
