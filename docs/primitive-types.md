@@ -36,11 +36,13 @@ Floating point literals can include exponents (scientific notation):
 let x = 2.8e16;
 ```
 
+The exponent can be prefixed using `e` or `E`, and can be positive or negative.
+
 Floating point values also support additional literals:
 * `NaN` - A special value represent a non-numeric value
-* `Inf` - Positive infinity
+* `Infinity` - Positive infinity
 
-Negative infinity is represented as `-Inf`.
+Negative infinity is represented as `-Infinity`.
 
 The type of an integer or floating point literal can be controlled by placing the type directly after the literal (with no space between):
 ```
@@ -49,7 +51,7 @@ let x = 123i64
 
 A `char` is a single Unicode code point between single quotes: `'a'`.
 
-It can also be specified using an escape sequence: `'\u{7FFF}'`.
+It can also be specified using a unicode escape sequence: `'\u{7FFF}'`.
 
 The single quote `char` (`'`) can be represented as `'\''`.
 
@@ -63,19 +65,21 @@ For numeric literals, underscores can be used as separators, such as `1_234`.
 ## Text and strings
 While a `char` is always 32-bits (i.e., 4 bytes), `string` values are comprised of characters that may be anywhere between 8- and 32-bits, encoded in UTF-8.
 
-A `string` literal is enclosed in double quotes (`"`):
+A `String` literal is enclosed in double quotes (`"`):
 ```
 let x = "Hello, world!";
 ```
 
+> Note: `String`s are not primitive types, but the syntax is provided here since they have literal representations. 
+
 ### Escape sequences
-The following escape sequences can appear within a `string`:
+The following escape sequences can appear within a `char` or `string`:
 * `\n` - Newline
 * `\r` - Carriage return
 * `\t` - Tab
 * `\\` - Backslash
 * `\0` - Nul
-* `\"` - Double quote
+* `\"` - Double quote (just `'"'` for `char`)
 * `\u{7FFF}` - 24-bit Unicode character code (up to 6 digits)
 
 ### Raw strings
@@ -131,10 +135,17 @@ A `string` can be converted to a numeric value using a `tryParse` operation:
 let i = i32::tryParse("123");
 ```
 
-The type of `i` will be `i32?`, meaning a "nullable" integer. Learn more about `null` in the section about [vectors](./vectors.md).
+The type of `i` will be `i32?`, meaning a "nullable" integer. Learn more about `null` in the section about [vectors](./collections.md).
 
 ### Overflow/Underflow
-By default, a program will panic, leading to termination, if a conversion results in overflow or underflow (the new representation cannot hold the previous value). An operation can be wrapped in an `unchecked` expression to prevent this from happening.
+By default, a program will panic, leading to termination, if a conversion results in overflow or underflow (the representation cannot hold the previous value). An operation can be wrapped in an `unchecked` expression to prevent this from happening:
+```
+let result = unchecked {
+    123_345_678 * 2_000
+};
+```
+
+If the operation overflows, the result wraps around, which will mean something different depending on whether the value is signed/unsigned.
 
 ### Unicode checks
-An integer value can be converted to a `char`; however, the compile verifies the value represent a valid Unicode code point. Invalid code points will result in the program panicking. An operation can be wrapped in an `unchecked` expression to prevent this from happening.
+An integer value can be converted to a `char`; however, the compiler verifies the value represents a valid Unicode code point. At runtime, invalid code points will result in the program panicking. An operation can be wrapped in an `unchecked` expression to prevent this from happening.

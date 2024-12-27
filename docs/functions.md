@@ -26,11 +26,11 @@ let sum = fn(x: i23, y: i32): i32 {
 };
 ```
 
-One thing that might be surprising is that QL doesn't have the concept of [scalar values](./vectors.md). That means `sum` can be called like this:
+One thing that might be surprising is that QL automatically promotes [scalar values](./collections.md). That means `sum` can be called like this:
 ```
 let result1 = sum(1, 2);           # 3
 let result2 = sum([1, 2], [3, 4]); # [4, 6]
-let result3 = sum([1, 2], 3);      # [4]
+let result3 = sum([1, 2], 3);      # [4, 5]
 ```
 
 It can be a bit difficult to think about how a function should behave when its arguments are collections. However, in doing so, a lot of classic errors is programming can be avoided.
@@ -40,7 +40,7 @@ This becomes clear when you realize `null` is just an empty collection in QL. If
 Another way to implement `sum` is to do something like this:
 ```
 let sum = fn(x: i32?): i32 {
-    if x == null { 
+    if first == null { 
         select 0 
     } else {
         let x, ...rest = x;
