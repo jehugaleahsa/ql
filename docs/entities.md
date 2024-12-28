@@ -21,24 +21,24 @@ let Address = type {
 };
 ```
 
-> **NOTE:** If a property's value can be `null`, put a `?` after the type to indicate it.
+> **NOTE:** If a property's value can be `null`, put a `?` after the type to indicate it. Alternatively, you can say `Optional<T>`.
 
 Now, we can update our `Customer` entity to look like this:
 ```
 let Customer = type {
-    id: i32,
+    id: i32?,
     name: String,
     address: Address
 };
 ```
 
-> **NOTE:** The point is that entities can contain other entities.
+> **NOTE:** The point here is that entities can contain other entities.
 
 An instance of a `Customer` can then be created like this:
 ```
 let customer: Customer = {
     id: 1,
-    name: "Big Mart, inc.",
+    name: "Big Mart, Inc.",
     address: {
         line1: "Big Mart Ln",
         municipality: "Greenborough",
@@ -64,12 +64,12 @@ let customer: Customer = {
 ```
 
 ## Traits
-Entity declarations using the `type` keyword can also be referred to as "traits". In order to share properties across related entities, traits can be combined.
+Entity declarations using the `type` keyword can also be referred to as "traits". In order to share properties and methods across related entities, traits can be combined.
 
 For example, let's define a common trait for all entities mapping to a database, giving them an `id` property:
 ```
 let DBModel = type {
-    id: i32
+    id: i32?
 };
 ```
 
@@ -99,15 +99,8 @@ select {
 
 Here, we are creating an anonymous type from a `Customer` with only two properties, `id` and `firstName`. The types of `id` and `firstName` are inferred automatically, including whether a `null` is possible. Being anonymous, these types cannot be constructed outside of a query by name.
 
-When an anonymous type is used in a `using` operation, an `equals` implementation is provided automatically using all the values. For example:
-```
-union newCustomers oldCustomers using { firstName, lastName };
-```
-
-Here, we are creating an anonymous type from the `firstName` and `lastName` properties of a `Customer`, and equality will be implemented automatically by comparing the first and last name (i.e., by comparing each string value).
-
 ## Copying
-In many operations, it's easier to assume entities are immutable. Instead of directly updating a property, you can make a copy of an object, changing the value of individual properties instead:
+In many operations, it's common to treat entities as immutable. Instead of directly updating a property, you can make a copy of an object, changing the value of individual properties instead:
 ```
 let customer: Customer = {
     id: 123,
@@ -121,7 +114,7 @@ let updated: Customer = {
 };
 ```
 
-After this operation, `customer` and `updated` will have all the same values, except `updated`'s `age` will be `24` instead of `23`. This same syntax should be used as a short-hand inside [update operations](./in-memory-sources.md#updating-values).
+After this operation, `customer` and `updated` will have all the same values, except `updated`'s `age` will be `24` instead of `23`. This same syntax is used as a short-hand inside [update operations](./in-memory-sources.md#updating-values).
 
 For nested properties, copying can be a little more verbose:
 ```
@@ -143,3 +136,5 @@ let updated: Customer = {
     }
 };
 ```
+
+> **NOTE:** It's important not to mix mutable and immutable code, especially when dealing with nested objects and collections. When copying objects, a shallow copy is performed by default. This means modification to a shared object may impact every object that shares it. It's usually better to start with a design that assumes immutability and only move toward mutability once it's been shown to improve performance.

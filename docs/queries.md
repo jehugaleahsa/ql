@@ -13,7 +13,7 @@ let result =
 
 The `as` keyword is used to provide an alias for items in the collection. An alias *is required*.
 
-> By convention, aliases tend to be small, but they can be more descriptive, like `customer` in the previous example. The reason for shorter aliases is to reduce the horizontal space needed to define queries, similar to SQL.
+> By convention, aliases tend to be small, but they can be more descriptive, like `customer` in the previous example. The reason for shorter aliases is to reduce the horizontal space needed to define queries, similar to SQL. Chose a naming convention that works best for you.
 
 After the `from` operation, items from the collection are referred to using the alias. That's why `c` appears in the `select` operation.
 
@@ -41,7 +41,7 @@ from customers as c
 select { ...c };
 ```
 
-If properties are copied from multiple entities, properties with overlapping names will comes from the latter entity:
+If properties are copied from multiple entities, properties with overlapping names will come from the latter entity:
 ```
 from customers as c
 select { ...c, ...o }; # id will come from o, not c
@@ -79,6 +79,27 @@ select {
 };
 ```
 
+### Arithmetic expressions and other computations
+A projected property can also be an expression involving arithmetic operations or method calls, such as:
+```
+from customers as c
+select { 
+    score: (100 * c.orders.count()) as f64 + (c.creditRating * 0.05) 
+};
+```
+
+### Let
+Anywhere within a query, expressions can be broken out into smaller chunks by giving them an alias:
+```
+from customers as c
+let orderScore = 100f64 * c.orders.count() as f64
+let creditScore = c.creditRating * 0.05
+let totalScore = orderScore + creditScore
+select { score: totalScore };
+``` 
+
+This can help to keep line from getting too long, allow for reuse, and make complex operations easier to understand.
+
 ## Where
 In order to filter records, a `where` operation can be performed. After the `where` keyword, a boolean expression must be provided. Only records satisfying the `where` expression will be included in the results.
 ```
@@ -93,8 +114,11 @@ Multiple `where` operations can appear in the same query. For example, two `wher
 let loyalCustomersWithOpenOrders =
     from customers as c
     where c.isLoyal
-    from c.orders as o
-    where o.status != 'closed'
+    let openOrders = 
+        from c.orders as o
+        where o.status != 'closed'
+        select o
+    where openOrders.any()
     select { customer: c };
 ```
 
@@ -160,10 +184,10 @@ let os =
     from orders as o
     left join customers as c on c.id == o.customerId
     select { customer: c, order: o };
-let result = cs union os by customer.id, order.id;
+let result = union cs os using (customer.id, order.id);
 ```
 
-The important take away is that the equivalent of a `FULL OUTER JOIN` requires looping over the collections twice, as well as a way of `union`-ing the results. Unlike SQL, QL has no guarantee that it can uniquely identify `customer` or `order` entities. Therefore, the `by` clause specifies which properties to uniquely identify records.
+The important take away is that the equivalent of a `FULL OUTER JOIN` requires looping over the collections twice, as well as a way of `union`-ing the results. Unlike SQL, QL has no guarantee that it can uniquely identify `customer` or `order` entities. Therefore, the `using` clause specifies which properties to uniquely identify records.
 
 ## Grouping
 Groups can be formed using the `group by` keywords. When grouping, you must identify what entities are being grouped and what the key (unique value) is to group them by. For example:
@@ -231,7 +255,7 @@ Other types, such as primitive values and strings, have a default meaning for "e
 let ordersByCustomerId =
     from customer as c
     join order as o on c.id = o.customerId
-    group o by { c.id } as g
+    group o by c.id as g
     aggregate {
         customerId: g.key
         orderCount: count(g)

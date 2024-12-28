@@ -30,7 +30,7 @@ let Thing = type {
 };
 let first: Thing = [{ id: 1 }, { id: 2 }];
 let second: Thing = [{ id: 2 }, { id: 3 }];
-let combined = union first second using { id }; 
+let combined = union first second using (id); 
 # -> [{ id: 1 }, { id: 2 }, { id: 3 }]
 ```
 
@@ -46,7 +46,7 @@ The two collections must have the same type. If the element type is not comparab
 ```
 let first: Thing = [{ id: 1 }, { id: 2 }];
 let second: Thing = [{ id: 2 }, { id: 3 }];
-let combined = intersection first second using { id };  # -> [{ id: 2 }]
+let combined = intersection first second using (id);  # -> [{ id: 2 }]
 ```
 
 ## Except
@@ -61,6 +61,5 @@ The two collections must have the same type. If the element type is not comparab
 ```
 let first: Thing = [{ id: 1 }, { id: 2 }];
 let second: Thing = [{ id: 2 }, { id: 3 }];
-let combined = except first second using { id };  # -> [{ id: 1 }]
+let combined = except first second using (id);  # -> [{ id: 1 }]
 ```
-

@@ -21,47 +21,40 @@ let greet = fn(): String {
 
 Functions can take zero or more arguments. The type of arguments must be specified. Here's a basic example:
 ```
-let sum = fn(x: i23, y: i32): i32 {
+let sum = fn(x: i32, y: i32): i32 {
+    select x + y
+};
+
+sum(1, 2) # 3
+```
+
+## Non-scalar thinking
+One of the goals of QL is to get away from thinking about operations in terms of individual scalar values or objects. Instead, thought should go into making the same function work against a scalar and a vector at the same time. We can redefine the function above so it works against either:
+```
+let sum = fn(xs: i32*, ys: i32*): i32* {
     select x + y
 };
 ```
 
-One thing that might be surprising is that QL automatically promotes [scalar values](./collections.md). That means `sum` can be called like this:
+That means `sum` can be called like this:
 ```
 let result1 = sum(1, 2);           # 3
 let result2 = sum([1, 2], [3, 4]); # [4, 6]
 let result3 = sum([1, 2], 3);      # [4, 5]
+let result4 = sum(null, null)      # null
 ```
 
 It can be a bit difficult to think about how a function should behave when its arguments are collections. However, in doing so, a lot of classic errors is programming can be avoided.
 
-This becomes clear when you realize `null` is just an empty collection in QL. If functions are defined to work on collections, receiving a `null` is usually not a failure condition - it usually results in nothing happening.
-
-Another way to implement `sum` is to do something like this:
+As a second example, we can implement `count` like so:
 ```
-let sum = fn(x: i32?): i32 {
-    if first == null { 
-        select 0 
-    } else {
-        let x, ...rest = x;
-        select x + sum(rest)
+let count = fn(x: i32*): usize* {
+    let mut result = 0usize;
+    let mut it = x.iterator();
+    while let Some(next) = it.next() {
+        result += 1usize;
     }
-};
-```
-
-Notice there's just one `i32?` argument. The `?` is necessary because we allow the given collection to be empty. 
-
-If the collection is not empty (a.k.a., not `null`), we strip off the first element and add it to rest of the elements passed to `sum`, *recursively*. Eventually we'll run out of elements and the recursive calls will stop.
-
-As a second example, we can implement `count` in a similar way:
-```
-let count = fn(x: i32?): i32 {
-    if x == null {
-        select 0
-    } else {
-        let _, ...rest = x;
-        return count(rest) + 1
-    }
+    result
 }
 ```
 
@@ -69,33 +62,38 @@ Here, we didn't even both assigning the first element to a variable, using `_` t
 
 Now let's try implementing a similar function to compute an average:
 ```
-let avg = fn(values: i32?): f64? {
-    if values == null {
-        select null
-    } else {
-        let total = sum(values) as f64;
-        let count = count(values) as f64;
-        select total / count
+let sumAndCount = fn(values: i32*): (i64, usize)* {
+    let mut sum = 0i64;
+    let mut count = 0usize;
+    let mut it = values.iterator();
+    while let Some(it) = it.next() {
+        sum += it.value() as i64;
+        count += 1uszie;
     }
+    (sum, count)
+};
+let avg = fn(values: i32*): f64* {
+    if values == null {
+        return select null
+    }
+    let (sum, count) = sumAndCount(values);
+    select total as f64 / count as f64
 };
 ```
 
 Again, we allow for `null` to be passed to `avg`. One classic gotcha in programming is that dividing by zero results in an error. To avoid that, we check for `null` and return `null` in that case.
 
-> Within the `else` block, the compiler knows `values` cannot be `null`. In this situation, both `sum` and `count` handle `null`, so that's not that important.
-
-> In other languages, at runtime, `sum` and `count` will be run one after the other while executing `avg`. QL makes no such guarantee. QL may be smart and replace these recursive implementations with simple loops in machine code. Furthermore, QL may run `sum` and `count` in parallel.
+> **NOTE:** Here we use an explicit `return` to force and immediate exit if we enter the `if`. For the rest of the method, the compiler knows `values` cannot be `null`. In this situation, both `sum` and `count` handle `null`, so that's not that important.
 
 Now image we have a different `count`-like method:
 ```
-let countOrNull = fn(x: i32?): i32? {
+let countOrNull = fn(x: i32*): i32?* {
     if x == null {
-        select null
-    } else {
-        let _, ...rest = x;
-        let restCount = countOrNull(rest) ?? 0;
-        select restCount + 1
+        return select null
     }
+    let _, ...rest = x;
+    let restCount = countOrNull(rest) ?? 0;
+    select restCount + 1
 };
 ```
 
@@ -121,20 +119,21 @@ What if we also want to support `sum()`? Furthermore, what if we wanted to suppo
 
 We can slightly modify our function signatures to accomplish this:
 ```
-let sum = fn(...x: i32): i32 {
+let sum = fn(...x: i32*): i32* {
     # ... same as before
 };
 ```
 
 When we add `...` before the last parameter, it means the function can be called with an arbitrary number of parameters. The compiler will simply wrap all such parameters in a collection automatically.
 
-> **NOTE:** All vararg parameters are implicitly null-able, therefore a trailing `?` is not allowed.
+> **NOTE:** All vararg parameters are implicitly null-able, since passing no arguments is allowed.
 
 Now we can call `sum` like this:
 ```
-sum([])
-sum(null)
-sum()
-sum([1, 2, 3])
-sum(1, 2, 3)
+sum([])                   # null
+sum(null)                 # null
+sum()                     # null
+sum([1, 2, 3])            # 6
+sum(1, 2, 3)              # 6
+sum([1, 2, 3], [4, 5, 6]) # [5, 7, 9]
 ```
