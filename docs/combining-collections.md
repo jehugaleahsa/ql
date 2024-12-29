@@ -10,7 +10,7 @@ let combined = [...first, ...second]; # [1, 2, 3, 4, 5, 6]
 ```
 
 ## Distinct
-The unique values that appear among collections can be retrieve using the `distinct` operation. No duplicates will be returned:
+The unique values that appear among collections can be retrieved using the `distinct` operation. No duplicates will be returned:
 ```
 let first = [1, 2, 3];
 let second = [2, 3, 4];
