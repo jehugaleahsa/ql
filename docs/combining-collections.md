@@ -2,12 +2,14 @@
 Multiple collections can be combined using concatenation, `distinct`, and joins.
 
 ## Concatenate
-A collection can be concatenateds to another collection using a copy operation, returning a new collection:
+A collection can be concatenated to another collection using a copy operation, returning a new collection:
 ```
 let first = [1, 2, 3];
 let second = [4, 5, 6];
 let combined = [...first, ...second]; # [1, 2, 3, 4, 5, 6]
 ```
+
+> **NOTE:** When concatenating immutable collections, concatenation may be performed lazily.
 
 ## Distinct
 The unique values that appear among collections can be retrieved using the `distinct` operation. No duplicates will be returned:

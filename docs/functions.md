@@ -68,7 +68,7 @@ let sumAndCount = fn(values: i32*): (i64, usize)* {
     let mut it = values.iterator();
     while let Some(it) = it.next() {
         sum += it.value() as i64;
-        count += 1uszie;
+        count += 1usize;
     }
     (sum, count)
 };

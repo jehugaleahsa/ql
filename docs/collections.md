@@ -94,7 +94,7 @@ The literal `null` represents no value.
 
 > **NOTE:** Unlike SQL, `null == null` returns `true` in QL.
 
-When declaring a variable (with `let`), the type can be specifed explicitly:
+When declaring a variable (with `let`), the type can be specified explicitly:
 ```
 let x: i32 = 123;
 ```
@@ -165,7 +165,7 @@ let Array2d<T, N, M> = type Updatable<T>, Splicable<usize, T> {
 
 A separate `Array` class exists for each additional dimension. Note that all the elements in a matrix/array must be the same type.
 
-Therefore, the following two statements are identifical:
+Therefore, the following two statements are identical:
 ```
 let m: i32[2, 2] = [[1, 2], [3, 4]];
 # or...

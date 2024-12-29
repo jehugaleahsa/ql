@@ -117,7 +117,7 @@ select v
 into values;
 ```
 
-The `into` keyword specifies the target for a query. A target is anything that is appendable, such as a mutable in-memory collection.
+The `into` keyword specifies the target for a query. A target is anything that is append-able, such as a mutable in-memory collection.
 
 ## Updating values
 Values can be updated in-place using the `update` operation:

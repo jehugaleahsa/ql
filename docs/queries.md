@@ -2,7 +2,7 @@
 A query is an expression that generates a collection. Once a [source](./in-memory-sources.md) is defined, it can be referenced in a query.
 
 ## From
-A query begins by specifying where the data comes from, using the `from` keyword. The simpliest query immediately returns the values from the source using the `select` operation:
+A query begins by specifying where the data comes from, using the `from` keyword. The simplest query immediately returns the values from the source using the `select` operation:
 ```
 let result =
     from customers as c
@@ -105,15 +105,17 @@ This can help to keep a line from getting too long, allow for reuse, and make co
 Unique values can be selected using the `distinct` operation. For example:
 ```
 from customers as c
-distinct c.firstName;
+distinct c.firstName as fn
+select fn;
 ```
 
-This is similar to `select`, but only unique values are returned.
+> **NOTE:** By itself, `distinct` cannot project values and so cannot be the last operation in a query. Therefore, we needed to provide an alias of `fn` in this example.
 
-In the example above, what if we wanted to return the full customer, only returning customers with unique first names? In that case, the `using` keyword can be used:
+In the example above, what if we wanted to return the full customer, only returning customers with unique first names instead? In that case, the `using` keyword can be used:
 ```
 from customers as c
 distinct c using(c.firstName)
+select c;
 ```
 
 ## Where
@@ -125,7 +127,7 @@ let loyalCustomers =
     select c;
 ```
 
-Multiple `where` operations can appear in the same query. For example, two `where` operations are peformed in the next example to filter the customers and then the orders:
+Multiple `where` operations can appear in the same query. For example, two `where` operations are performed in the next example to filter the customers and then the orders:
 ```
 let loyalCustomersWithOpenOrders =
     from customers as c
