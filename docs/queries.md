@@ -180,30 +180,38 @@ left join orders as o on c.id == o.customerId
 select { customer: c, order: o };
 ```
 
-## Outer joins
-There is no equivalent of SQL's `RIGHT OUTER JOIN` and `FULL OUTER JOIN`, but we will show how to simulate them.
+An interesting aspect of left joins is that the joined collection item (`o` in this case) is implicitly nullable. So, if `orders` is `Order[]`, then `o` must be `Order?`. Any operations on `o` for the rest of the query (after the `on` clause) must check for `null`. 
 
-A `RIGHT OUTER JOIN` is achieved by reversing the `from` and the `join`:
+> **NOTE:** A right join can be simulated by reversing the order collections are joined.
+
+## Full join
+The last type of join is a `full join`, which will join two related objects if they satisfy the condition, but will return every object no matter what. To demonstrate, we need two collections that can share information but don't form a parent/child relationship. Let's imagine a Role can be assigned to a User or a Group of Users, and we want to find all Roles that are assigned to at least one. Here's how we could do that.
 ```
-from orders as o
-left join customers as c on c.id == o.customerId
-select { customer: c, order: o };
+let userRoles =
+    from users as u
+    join userRoles as ur on u.id == ur.userId
+    join roles as r on ur.roleId == r.id
+    select r;
+let groupRoles =
+    from groups as g
+    join groupRoles as gr on g.id == gr.groupId
+    join role as r on gr.roleId == r.id
+    select;
+let assignedRoles =
+    from userRoles as ur
+    full join groupRoles as gr on ur.id == gr.id
+    let r = ur ?? gr
+    where r != null
+    select r;
 ```
 
-A `FULL OUTER JOIN` is more complicated:
+After the `on` clause, both `ur` or `gr` can potentially be `null`, but not both. Try to understand why. The compiler doesn't know this, though. In the example, we use the `??` operator to grab whichever value is non-null first and check for `null` using `where r != null`, but we also could have used the `!` suffix operator to express our intent, like so:
 ```
-let cs = 
-    from customers as c
-    left join orders as o on c.id == o.customerId
-    select { customer: c, order: o };
-let os =
-    from orders as o
-    left join customers as c on c.id == o.customerId
-    select { customer: c, order: o };
-let result = union cs os using (customer.id, order.id);
+let assignedRoles =
+    from userRoles as ur
+    full join groupRoles as gr on ur.id == gr.id
+    select (ur ?? gr)!;
 ```
-
-The important take away is that the equivalent of a `FULL OUTER JOIN` requires looping over the collections twice, as well as a way of `union`-ing the results. Unlike SQL, QL has no guarantee that it can uniquely identify `customer` or `order` entities. Therefore, the `using` clause specifies which properties to uniquely identify records.
 
 ## Grouping
 Groups can be formed using the `group by` keywords. When grouping, you must identify what entities are being grouped and what the key (unique value) is to group them by. For example:

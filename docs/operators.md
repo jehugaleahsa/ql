@@ -52,6 +52,7 @@ QL allows computing arithmetic on numeric primitive values.
 * `??` - null coalesce, such as `null ?? 123` equaling 123
 * `?.` - null-safe member accessor, such as `x?.y`
 * `?[]` - null-safe index accessor, such as `x?[0]`
+* `!` - explicitly mark a value non-null, such as `x!.y`
 
 ## Matrix and array operators
 
