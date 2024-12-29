@@ -1,8 +1,8 @@
 # Combining collections
 Multiple collections can be combined using concatenation, `distinct`, and joins.
 
-## Append
-A collection can be concatenated (i.e., appended) to another collection using a copy operation:
+## Concatenate
+A collection can be concatenateds to another collection using a copy operation, returning a new collection:
 ```
 let first = [1, 2, 3];
 let second = [4, 5, 6];
@@ -54,7 +54,7 @@ let combined =
 ```
 
 ## Set difference
-Values that only appear in the first collection, and not the second, can be retrieved using a `left join` as well:
+Values that only appear in the first collection, and not the second, can be retrieved using a `left join`:
 ```
 let first = [1, 2, 3];
 let second = [2, 3, 4];
