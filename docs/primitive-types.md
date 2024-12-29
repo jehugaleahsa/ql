@@ -23,13 +23,13 @@ When an integer literal appears by itself, such as:
 ```
 let x = 123;
 ```
-The type defaults to `i32`.
+the type defaults to `i32`.
 
 When a floating point literal appears by itself, such as:
 ```
 let x = 3.14;
 ```
-The type defaults to `f64`.
+the type defaults to `f64`.
 
 Floating point literals can include exponents (scientific notation):
 ```
@@ -39,7 +39,7 @@ let x = 2.8e16;
 The exponent can be prefixed using `e` or `E`, and can be positive or negative.
 
 Floating point values also support additional literals:
-* `NaN` - A special value represent a non-numeric value
+* `NaN` - A special value representing a non-numeric value
 * `Infinity` - Positive infinity
 
 Negative infinity is represented as `-Infinity`.
@@ -63,7 +63,7 @@ For numeric literals, underscores can be used as separators, such as `1_234`.
 > **Note:** There's no restriction on the placement of underscores. They can appear at the beginning of a numeric literal, anywhere in the middle, or at the end. Multiple underscores can also appear next to each other.
 
 ## Text and strings
-While a `char` is always 32-bits (i.e., 4 bytes), `string` values are comprised of characters that may be anywhere between 8- and 32-bits, encoded in UTF-8.
+While a `char` is always 32-bits (i.e., 4 bytes), `String` values are comprised of characters that may be anywhere between 8- and 32-bits, encoded in UTF-8.
 
 A `String` literal is enclosed in double quotes (`"`):
 ```
@@ -73,27 +73,28 @@ let x = "Hello, world!";
 > Note: `String`s are not primitive types, but the syntax is provided here since they have literal representations. 
 
 ### Escape sequences
-The following escape sequences can appear within a `char` or `string`:
+The following escape sequences can appear within a `char` or `String`:
 * `\n` - Newline
 * `\r` - Carriage return
 * `\t` - Tab
 * `\\` - Backslash
 * `\0` - Nul
 * `\"` - Double quote (just `'"'` for `char`)
+* `\'` - Single quote (just `"'"` for `String`)
 * `\u{7FFF}` - 24-bit Unicode character code (up to 6 digits)
 
-### Raw strings
-A `string` literal can be prefixed with an `r` (meaning "raw"):
+### Raw and multiline strings
+A `String` literal can be prefixed with an `r` (meaning "raw"):
 ```
 let x = r"Hello, world!";
 ```
 
-Within a raw `string`, escape sequences are ignored. This means backslashes are treated literally and do not need escaped:
+Within a raw `String`, escape sequences are ignored. This means backslashes are treated literally and do not need escaped:
 ```
 let x = r"This is \ fine.";
 ```
 
-Raw `string` literals can be broken across multiple lines:
+Raw `String` literals can be broken across multiple lines:
 ```
 let x = r"This
 is
@@ -101,9 +102,9 @@ also
 fine";
 ```
 
-This is as if `\n` was inserted into the `string`.
+This is as if `\n` was inserted into the `String`.
 
-If the `string` contains quotes, an arbitrary number of wrapping quotes can be used to indicate the start and end of the `string`:
+If the `String` contains quotes, an arbitrary number of wrapping quotes can be used to indicate the start and end of the `String`:
 ```
 let x = r"""This
 "string"
@@ -130,7 +131,7 @@ let y = false as i32; # 0
 
 Going the other way, `0` converts to `false` and all other values convert to `true`, including negative values.
 
-A `string` can be converted to a numeric value using a `tryParse` operation:
+A `String` can be converted to a numeric value using a `tryParse` operation:
 ```
 let i = i32::tryParse("123");
 ```

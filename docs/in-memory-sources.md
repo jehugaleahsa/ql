@@ -23,7 +23,7 @@ An empty collection would look like this:
 let empty = []; # compiles
 ```
 
-Without values to initialize a collection, its type is determined to be `null`. A `null` can be used in the context of any other type. To give a collection an explicit type, the following syntax is used:
+Without values to initialize a collection, its type is determined to be `null`. A `null` collection can be used in the context of any other collection. To give a collection an explicit type, the following syntax is used:
 ```
 let empty: i32[] = [];
 ```
@@ -31,11 +31,11 @@ let empty: i32[] = [];
 This collection can only be used where a collection of 32-bit integers are expected. More on `i32` when we discuss [primitive types](./primitive-types.md).
 
 ## Concatenating
-Collections created with `[]` are immutable by default. This means the contents of the collection cannot be updated or deleted once initialized.
+Collections are immutable by default. This means the contents of the collection cannot be updated or deleted once initialized.
 
-Appending to a collection can be achieved using the `append` operation. This results in a new collection:
+Two vectors can be concatenated together using copy notation:
 ```
-let values = append values [4]; # produces [1, 2, 3, 4]
+let values = [...values, 4]; # produces [1, 2, 3, 4]
 ```
 
 > **NOTE:** that we reassign `values`; this *shadows* the previous variable, making it inaccessible in the rest of the scope.
@@ -102,7 +102,7 @@ let [first ?? 0, ..._] = values;
 ## Mutable collections
 A mutable collection can be created using the `mut` keyword:
 ```
-let values: i32[] = mut [];
+let mut values: i32[] = [];
 ```
 
 A `mut` collection can be added to, updated, or removed from. 
@@ -127,7 +127,7 @@ where values % 2 == 0
 update v (v + 1); # produces [1, 3, 3, 5]
 ```
 
-After the `update` keyword, the next value is assigned to a variable (named `v` here). After that is the new value (`v + 1` here). This get more interesting when working with a complex type:
+After the `update` keyword, the next value is assigned to a variable (named `v` here). After that is the new value (`v + 1` here). This gets more interesting when working with a complex type:
 ```
 from customer as c
 where c.id == 123

@@ -41,9 +41,10 @@ from customers as c
 select { ...c };
 ```
 
-If properties are copied from multiple entities, properties with overlapping names will come from the latter entity:
+If properties are copied from multiple entities, properties with overlapping names will come from the latter entity. Assume in the next example that both customers and orders have an `id` property:
 ```
 from customers as c
+from c.orders as o
 select { ...c, ...o }; # id will come from o, not c
 ```
 
@@ -98,7 +99,22 @@ let totalScore = orderScore + creditScore
 select { score: totalScore };
 ``` 
 
-This can help to keep line from getting too long, allow for reuse, and make complex operations easier to understand.
+This can help to keep a line from getting too long, allow for reuse, and make complex operations easier to understand.
+
+## Distinct
+Unique values can be selected using the `distinct` operation. For example:
+```
+from customers as c
+distinct c.firstName;
+```
+
+This is similar to `select`, but only unique values are returned.
+
+In the example above, what if we wanted to return the full customer, only returning customers with unique first names? In that case, the `using` keyword can be used:
+```
+from customers as c
+distinct c using(c.firstName)
+```
 
 ## Where
 In order to filter records, a `where` operation can be performed. After the `where` keyword, a boolean expression must be provided. Only records satisfying the `where` expression will be included in the results.
@@ -118,7 +134,7 @@ let loyalCustomersWithOpenOrders =
         from c.orders as o
         where o.status != 'closed'
         select o
-    where openOrders.any()
+    where any(openOrders)
     select { customer: c };
 ```
 
@@ -210,8 +226,6 @@ We'd end up with a group for "Sue", "Tom", and "Bob" with two customers under "S
 * Tom - [Tom Harris]
 * Bob - [Bob Thomas]
 
-> Notice that the results of a `group by` can be assigned to a variable. This allows you to reuse groups if necessary, or to break up large operations.
-
 The result of a `group by` operation is a list of `Grouping<K, V>` objects, where `K` is the type of the key (what you're grouping by) and where `V` is what each group contains. The type of `K` and `V` is inferred automatically from the value that appears after the `group` and `by` keywords, respectively.
 
 A `Grouping` is a type of vector with an additional `key` property. Whatever expression appears after the `by` is used to populate the `key` value for each group.
@@ -267,7 +281,7 @@ Notice we lose access to the customer using this approach. If you need access to
 let ordersByCustomerId =
     from customer as c
     join order as o on c.id = o.customerId
-    group o by c using { id } as g
+    group o by c using (id) as g
     aggregate {
         customer: g.key
         orderCount: count(g)

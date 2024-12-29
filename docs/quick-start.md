@@ -29,5 +29,5 @@ aggregate {
 # Apply 20% coupon to an order
 from orders as o
 where o.id == 123
-update o { amount: o.amount * .8 };
+update o { ...o, amount: o.amount * .8 };
 ```

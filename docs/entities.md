@@ -4,7 +4,7 @@ Beyond [primitive types](./primitive-types.md), new types can be declared, calle
 An entity is composed of named properties, and each property has a type. For example, a customer could be represented like this:
 ```
 let Customer = type {
-    id: i32,
+    id: i32?,
     name: String,
     address: String
 };

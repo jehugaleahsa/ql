@@ -22,13 +22,25 @@ Here, you can see addition is performed element-wise over the two collections.
 ## Scalars, vectors, matrices, and arrays
 Scalar values always have a "dimension" of 0, and a normal vector has a dimension of 1. Consider these examples:
 ```
-let x = 1;                                              # 0-dimensional scalar
-let y = [1, 2];                                         # 1-dimensional vector
-let z: [2, 2] = [[1, 2], [3, 4]];                       # 2-dimensional matrix
-let a: [2, 2, 2] = [[[1, 2], [3, 4]], [[5, 6], [7,8]]]; # 3-dimensional array
+let x = 1;               # 0-dimensional scalar
+let y = [1, 2];          # 1-dimensional vector
+let z: i32[2, 2] = [     # 2-dimensional matrix
+    [1, 2], 
+    [3, 4]
+];
+let a: i32[2, 2, 2] = [  # 3-dimensional array
+    [
+        [1, 2], 
+        [3, 4]
+    ], 
+    [
+        [5, 6], 
+        [7, 8]
+    ]
+];
 ```
 
-Matrices and arrays require special syntax to initialize. Notice after the variable name, we specified `: [2, 2]` and `: [2, 2, 2]`. By listing the dimensions explicitly as comma-separated values, we opt-in to using matrices and arrays. If we just did:
+Matrices and arrays require special syntax to initialize. Notice after the variable name, we specified `: i32[2, 2]` and `: i32[2, 2, 2]`. By listing the dimensions explicitly as comma-separated values, we opt-in to using matrices and arrays. If we just did:
 ```
 let z = [[1, 2], [3, 4]];
 ```
@@ -52,8 +64,8 @@ m * v # [[1, 4], [3, 8]]
 
 > If the dimensions are not compatible, the operation results in a panic, resulting in the program terminating!
 
-You can also multiply a matrix by another matrix, however there are two options. When using `*`, the two matrices must have identical dimensions
-and the elements are multiplied element-wise. When using `@`, the dimension only need to be compatible and normal matrix multiplication is performed. For example: 
+You can also multiply a matrix by another matrix; however there are two options. When using `*`, the two matrices must have identical dimensions
+and the elements are multiplied element-wise. When using `@`, the dimensions only need to be compatible and normal matrix multiplication is performed. For example: 
 ```
 let a: i32[2, 2] = [
     [1, 2],
@@ -78,15 +90,7 @@ m @ n # [[22, 49], [28, 64]]
 The result of broadcasting can be surprising when working with higher dimensions, so merit some experimentation.
 
 ## Null
-The empty collection (a.k.a., a collection with no elements) is represented using the literal `null`. It can also be written as `[]`.
-
-Appending `null` is a no-op, returning the original collection:
-```
-append [1, 2, 3] null # [1, 2, 3]
-append null [1, 2, 3] # [1, 2, 3]
-```
-
-The `null` collection is *all* types and *no* types at the same time. For example, you can append `null` to a vector of strings and a vector of integers - the result is the same - nothing happens.
+The literal `null` represents no value.
 
 > **NOTE:** Unlike SQL, `null == null` returns `true` in QL.
 
@@ -99,6 +103,8 @@ If `x` in the example above can also be `null`, it should be declared like this:
 ```
 let x: i32? = getValueOrNull();
 ```
+
+Under the hood, the type is actually `Optional<i32>`, where `null` is the special marker for when no value is present, so `T?` is just a syntactic sugar. 
 
 ### Lifted arithmetic operations
 Performing arithmetic operations on `null` results in `null`.
@@ -114,25 +120,25 @@ let bad = "12abc";      # this won't parse
 i32::tryParse(bad) + 23 # null
 ```
 
-Many functions are also designed to return `null` when passed `null` values. Arithmetic functions are just another form of function.
+Many functions are designed to return `null` when passed `null` values. Arithmetic functions are just another form of function.
 
 ## Common collection traits
 
 * `Iterable<T>` - Indicates that the elements of the collection can be iterated over.
-    * `iterator()` - Gets an iterator that returns `Optional<T>`, returning `Optional.empty()` when exhausted. The underlying collection controls the order the items are returned.
+    * `iterator()` - Gets an iterator that returns `Optional<T>`, returning `null` when exhausted. The underlying collection controls the order the items are returned.
     * `count()` - Gets the number of elements in the collection. The underlying collection can optimize the implementation.
     * `where()` - Returns an iterable only containing the items matching a predicate
     * `select()` - Return an iterable containing values mapped from the source collection using a mapping function.
-    * `flatSelect()` - Returns an iterable containing the flattened collections of the mapping operation.
+    * `flatten()` - Returns an iterable containing the flattened collections of the mapping operation.
     * etc.
-* `Indexed<K, V>: Iterable<V>` - Allows a collection to be indexed. For example, vectors are indexed by 0-based position and maps are indexed by their keys. 
+* `Indexed<K, V>` - Allows a collection to be indexed. For example, vectors are indexed by 0-based position and maps are indexed by their keys. 
 * `Appendable<T>: Iterable<T>` - Allows a collection to be on the receiving end of an `into` (a.k.a. `insert`) operation.
     * `add(T)` - adds an item to the collection
 * `Updatable<T>: Iterable<T>` - Allows a collection be updated in-place using an `update` operation.
     * `update(Iterator, V)` - replace the value at the given iterator location with the given value. 
 * `Deletable<T>: Iterable<T>` - Allows removing elements in-place from a collection.
     * `delete(Iterator)` - remove the value at the given iterator location.
-* `Splicable<K, V>: Indexable<K, V>` - Allows removing and adding multiple elements in-place at a particular index.
+* `Splicable<K, V>: Indexable<K, V>, Iterable<V>` - Allows removing and adding multiple elements in-place at a particular index.
 
 ## Vector
 The trait for a vector looks something like this:
@@ -152,16 +158,18 @@ let x: Vector<i32> = [1, 2, 3];
 ## Matrix and Array
 The underlying trait for matrix and array are the same, with compile-time dimensions:
 ```
-let Array<T, N, ...M> = type Updatable<T>, Splicable<usize, T> {
+let Array2d<T, N, M> = type Updatable<T>, Splicable<usize, T> {
     # ...implementation details
 };
 ```
+
+A separate `Array` class exists for each additional dimension. Note that all the elements in a matrix/array must be the same type.
 
 Therefore, the following two statements are identifical:
 ```
 let m: i32[2, 2] = [[1, 2], [3, 4]];
 # or...
-let m: Array<i32, 2, 2> = [[1, 2], [3, 4]];
+let m: Array2d<i32, 2, 2> = [[1, 2], [3, 4]];
 ```
 
 ## Tuple
@@ -186,9 +194,9 @@ let (_, second, ..._) = (1, 2, 3);
 This says to ignore the first value, bind the second value to `second`, and ignore any values that follow.
 
 ## Optional
-You can think of Optional as a special type of vector where there is either zero or one elements. Optional is used to wrap scalar values when `null` is a possible value. When `null`, the Optional is empty; otherwise, there is exactly one value - the scalar. You rarely need to work directly with an Optional because of the many syntactic short-cuts. For example, simply declaring a type with a trailing `?` makes it nullable, and therefore becomes Optional. Similarly, the `??` operator allows replacing `null` with another value, and `?.` allows expanding properties on a potentially `null` scalar.
+You can think of `Optional` as a special type of vector where there is either zero or one elements. `Optional` is used to wrap scalar values when `null` is possible. When `null`, the `Optional` is empty; otherwise, there is exactly one value - the scalar. You rarely need to work directly with an `Optional` because of the many syntactic short-cuts. For example, simply declaring a type with a trailing `?` makes it nullable, and therefore becomes `Optional`. Similarly, the `??` operator allows replacing `null` with another value, and `?.` allows expanding properties on a potentially `null` scalar.
 
-Where Optional becomes useful is when treating it as a collection. Optional provides an `asIterable()` method to provide access to the many collection operations and/or treat it as a source within a query.
+Where `Optional` becomes useful is when treating it as a collection. `Optional` provides an `asIterable()` method to provide access to the many collection operations and/or treat it as a source within a query.
 
 ## Set
 A set is similar to a vector except each value must be unique and the order the elements appear may not be guaranteed.
@@ -216,19 +224,19 @@ let s: Set<i32> = Set.ordered().of(1, 2, 3);
 
 If equality is not defined for a type, a comparator can be provided:
 ```
-let comparator = Equals<Customer>.using(c => c.id);
+let comparator = Hash<Customer>.using(c => c.id);
 let s: Set<i32> = Set.ordered(comparator).of(c1, c2, c3);
 ```
 
 ## Map
 Maps define mappings from a unique key to a value. The entries in a Map can be ordered or unordered, similar to Sets.
 ```
-let Map<K, V> = type Indexed<K>, Appendable<(K, V)>, Updatable<(K, V)>, Deletable<(K, V)> {
+let Map<K, V> = type Indexed<K, V>, Appendable<(K, V)>, Updatable<(K, V)>, Deletable<(K, V)> {
     # ...implementation details
 };
 ```
 
-Each entry in a Map is a key/value tuple (or pair). Maps can be inserted into, updated, or deleted using the `into`, `update`, and `delete` operations so long as those operations operate over tuples. Map expose a `keySet()` method, as well, whose type looks like this:
+Each entry in a Map is a key/value tuple (or pair). Maps can be inserted into, updated, or deleted using the `into`, `update`, and `delete` operations so long as those operations operate over tuples. Map exposes a `keySet()` method, as well, whose type looks like this:
 ```
 let KeySet<K> = type Deletable<K> {
     # ...implementation details
@@ -241,13 +249,14 @@ Here is an example of some common Map operations:
 ```
 let mut customerLookup = Map.from(
     from customers as c
-    select (c.id, c) # Select a tuple where the first element becomes the key
+    select (c.id, c) # Select a tuple of key/value pairs
 );
 
-# Find the customer with an ID of 123 - could be Optional.empty
+# Find the customer with an ID of 123 - could be null
 let customer123 = customerLookup[123];
 
 from customerLookup as l
+where customer123 != null
 where l.id == customer123.id
 delete l;
 ```
