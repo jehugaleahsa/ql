@@ -89,7 +89,7 @@ let first: Thing[] = [{ id: 1 }, { id: 2 }];
 let second: Thing[] = [{ id: 2 }, { id: 3 }];
 let combined =
     from first as f
-    left join second as s on f == s
+    left join second as s on f.id == s.id
     where s == null
     select f; # -> [{ id: 1 }]
 ```
