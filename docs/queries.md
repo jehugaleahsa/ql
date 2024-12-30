@@ -370,3 +370,50 @@ Here is a list of common aggregate functions:
 * `joined` - the values in the collection joined together into a string, separated by a separator
 
 > **NOTE:** One curiosity of `aggregate` is that you can apply collection operations on an alias. In the other operations we explored previously, an alias refers to a single value in a collection. In `aggregate`, the same alias now refers to an entire collection! Any filtering applied to the collection up to that point is accounted for when aggregating the values.
+
+## Ordering
+Values can be sorted using the `order by` operation.
+```
+from [3, 1, 2] as v
+order by v
+select v; # [1, 2, 3]
+```
+
+> **NOTE:** An `order by` operation cannot be the last operation in a query!
+
+Sorting can refer to specific fields, as well:
+```
+from customers as c
+order by c.firstName
+select c;
+```
+
+## Skip
+The `skip` operation skips either a specific number of values in a query or while a condition persists:
+```
+from 1..10 as v:
+skip 3
+select v; # [4, 5, 6, 7, 8, 9]
+```
+or
+```
+from 1..10 as v:
+skip v < 4
+select v; # [4, 5, 6, 7, 8, 9]
+```
+
+## Take
+The `take` operation takes a specific number of values in a query or while a condition persists:
+```
+from 1..10 as v:
+take 3
+select v; # [1, 2, 3]
+```
+or
+```
+from 1..10 as v:
+take v < 4
+select v; # [1, 2, 3]
+```
+
+## Windows

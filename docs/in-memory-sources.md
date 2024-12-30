@@ -108,38 +108,3 @@ let mut values: i32[] = [];
 A `mut` collection can be added to, updated, or removed from. 
 
 > **NOTE:** There is no mutable variant of `null`, so a type must be specified if it cannot be inferred.
-
-## Appending values
-Values can be inserted onto `values` using the `into` keyword:
-```
-from [1, 2, 3, 4] as v
-select v
-into values;
-```
-
-The `into` keyword specifies the target for a query. A target is anything that is append-able, such as a mutable in-memory collection.
-
-## Updating values
-Values can be updated in-place using the `update` operation:
-```
-from values as v
-where values % 2 == 0
-update v (v + 1); # produces [1, 3, 3, 5]
-```
-
-After the `update` keyword, the next value is assigned to a variable (named `v` here). After that is the new value (`v + 1` here). This gets more interesting when working with a complex type:
-```
-from customer as c
-where c.id == 123
-update c { ...c, firstName: "Bob" };
-```
-
-Here, we are saying replace the first name of the customer whose `id == 123` with `"Bob"`. 
-
-## Deleting values
-Values can also be removed in-place, using the `delete` operation:
-```
-from values as v
-where value % 2 == 0
-delete v; # produces [1, 3]
-```
