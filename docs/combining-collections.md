@@ -18,11 +18,10 @@ let first = [1, 2, 3];
 let second = [2, 3, 4];
 let combined =
     from [...first, ...second] as v
-    distinct v
-    select v; # [1, 2, 3, 4]
+    distinct v; # [1, 2, 3, 4]
 ```
 
-If the element type is not comparable, a `using` clause can be provided:
+If the element type is not comparable, a `on` clause can be provided:
 ```
 let Thing = type {
     id: i32
@@ -31,7 +30,7 @@ let first: Thing[] = [{ id: 1 }, { id: 2 }];
 let second: Thing[] = [{ id: 2 }, { id: 3 }];
 let combined = 
     from [...first, ...second] as t
-    distinct t using(t.id)
+    distinct t on t.id
     select t; # -> [{ id: 1 }, { id: 2 }, { id: 3 }]
 ```
 

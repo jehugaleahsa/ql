@@ -2,7 +2,7 @@
 A query is an expression that generates a collection. Once a source is defined, it can be referenced in a query. Queries are also used to source the information needed in insert, update, and delete operations.
 
 ## From
-A query begins by specifying where the data comes from, using the `from` keyword. The simplest query immediately returns the values from the source using the `select` operation:
+A query often begins by specifying where the data comes from, using the `from` keyword. The simplest query immediately returns the values from the source using the `select` operation:
 ```
 let result =
     from customers as c
@@ -48,7 +48,7 @@ from c.orders as o
 select { ...c, ...o }; # id will come from o, not c
 ```
 
-The selected entity can customize the property name by putting the name before a colon:
+The property names of selected entities can be customized by putting the name and colon before the value:
 ```
 from customers as c
 select { customer: c };
@@ -107,7 +107,7 @@ select {
 Almost anywhere within a query, expressions can be broken out into smaller chunks by giving them an alias:
 ```
 from customers as c
-let orderScore = 100f64 * c.orders.count() as f64
+let orderScore = 100.0 * c.orders.count() as f64
 let creditScore = c.creditRating * 0.05
 let totalScore = orderScore + creditScore
 select { score: totalScore };
@@ -184,13 +184,13 @@ distinct c;
 
 > **NOTE:** `distinct` can be the last operation in a query, no `select` required!
 
-In the example above, what if we wanted to base uniqueness by first name only? In that case, the `using` keyword can be used:
+In the example above, what if we wanted to base uniqueness by first name only? In that case, the `on` keyword can be used:
 ```
 from customers as c
-distinct c using c.firstName;
+distinct c on c.firstName;
 ```
 
-> **NOTE:** Multiple properties can be passed to `using` using a tuple, such as `c.firstName, c.lastName`. However, it can also be passed an anonymous type, such as `{ firstName: c.firstName, lastName: c.lastName }`. Anonymous types used in the context of `using` automatically implement equality based on the fields provided. However, specifying a tuple works just as well in this situation and requires less typing and overhead.
+> **NOTE:** Multiple properties can be passed to `on` using a tuple, such as `c.firstName, c.lastName`. However, it can also be passed an anonymous type, such as `{ firstName: c.firstName, lastName: c.lastName }`. Anonymous types used in the context of `on` automatically implement equality based on the fields provided. However, specifying a tuple works just as well in this situation and requires less typing and overhead.
 
 > **NOTE:** It can be helpful to think of `distinct` as a special form of `where`. After the `where` all subsequent operations will only see the unique values.
 
@@ -322,12 +322,12 @@ let ordersByCustomer =
 
 In this example, we are grouping the orders by their customers. Since we put `o` after the `group` keyword, the values in the groups will be orders, and the `key` for each group will be the customer.
 
-If we want to group by customer, but only using the customer's first name, we use `using`:
+If we want to group by customer, but only using the customer's first name, we use `on`:
 ```
 let ordersByCustomer =
     from customer as c
     join order as o on c.id == o.customerId
-    group o by c using (c.firstName);
+    group o by c on c.firstName;
 ```
 
 ## Aggregation
