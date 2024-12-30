@@ -67,7 +67,6 @@ Those familiar with SQL, functional programming, or vector programming (e.g., R,
 10. [Combining Collections](./combining-collections.md)
     * [Concatenate](./combining-collections.md#concatenate)
     * [Distinct](./combining-collections.md#distinct)
-        * [Full joins for distinct values](./combining-collections.md#full-joins-for-distinct-values)
     * [Intersection](./combining-collections.md#intersection)
     * [Set difference](./combining-collections.md#set-difference)
 11. [Functions](./functions.md)

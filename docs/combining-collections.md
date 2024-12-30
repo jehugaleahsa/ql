@@ -35,21 +35,6 @@ let combined =
     select t; # -> [{ id: 1 }, { id: 2 }, { id: 3 }]
 ```
 
-### Full joins for distinct values
-Alternatively, distinct values can be retrieved using a `full join`:
-```
-let first = [1, 2, 3];
-let second = [2, 3, 4];
-let combined =
-    from first as f
-    full join second as s on f == s
-    let value = f ?? s
-    where value != null
-    select value;
-```
-
-The only negative to using `full join` is that the values can be `null` after the `on` clause, meaning it must be handled.
-
 ## Intersection
 Values that only appear in both collections can be retrieved using a `join`:
 ```

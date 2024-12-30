@@ -187,7 +187,7 @@ An interesting aspect of left joins is that the joined collection item (`o` in t
 > **NOTE:** A right join can be simulated by reversing the order collections are joined.
 
 ## Full join
-The last type of join is a `full join`, which will join two related objects if they satisfy the condition, but will return every object no matter what. To demonstrate, we need two collections that can share information but don't form a parent/child relationship. Let's imagine a Role can be assigned to a User or a Group of Users, and we want to find all Roles that are assigned to at least one. Here's how we could do that.
+The last type of join is a `full join`, which will join two related objects if they satisfy the condition, but will return every object from either collection even if no match is found. To demonstrate, we need two collections that can share information but don't form a parent/child relationship. Let's imagine a Role can be assigned to a User or a Group of Users, and we want to find all Roles that are assigned to at least one. Here's how we could do that.
 ```
 let userRoles =
     from users as u
@@ -213,6 +213,21 @@ let assignedRoles =
     from userRoles as ur
     full join groupRoles as gr on ur.id == gr.id
     select (ur ?? gr)!;
+```
+
+This example is just for demonstration purposes. A much easier solution is as follows:
+```
+from roles as r
+let hasUserRoles =
+    from userRoles as ur
+    where ur.roleId == r.id
+    aggregate any(ur)
+let hasGroupRoles =
+    from groupRoles as gr
+    where gr.roleId == r.id
+    aggregate any(gr)
+where hasUserRoles or hasGroupRoles
+select r;
 ```
 
 ## Grouping
@@ -267,9 +282,17 @@ let customerOrderCounts =
 
 First, notice we provide an alias for the group, `g`. We use this in the `aggregate` operation below.
 
-An `aggregate` operation takes the list of `Grouping` objects produced from a `group by` and combines each into a single result.
+Here, the `aggregate` operation takes the list of `Grouping<Customer>` objects produced from a `group by` and combines each into a result, one for each group.
 
 As you can see, if we want to access the customer information (what we grouped by), we use the `key` property on the group.
+
+An `aggregate` operation can be used even without a `group by`. Consider:
+```
+from customers as c
+aggregate count(c);
+```
+
+This query returns the number of customers. The result is a single integer value.
 
 ### Keys
 Be sure the value(s) you group by have a notion of "equality". For example, a database library may ensure that only a single instance of a record exists in memory for each row in the database, using the primary key under the hood to uniquely identify each record. In that case, "equality" will be based on identity (the location of the record in memory).
