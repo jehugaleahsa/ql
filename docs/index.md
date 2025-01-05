@@ -1,6 +1,8 @@
 # Intoduction
-**Q**uery **L**anguage is an attempt to informally define a grammar for working with data. The hope is it can also behave as a SQL transpiler. The premise is that nearly all computations on a modern day computer can be described using a series of SQL-like queries that are composable. Ideally, this specification will be used in mainstream programming languages, in part of in full.
+**Q**uery **L**anguage is an attempt to informally define a grammar for working with data. The hope is it, in part, can also behave as a SQL transpiler. The premise is that nearly all computations on a modern day computer can be described using a series of SQL-like queries that are composable. Ideally, this specification will be used in mainstream programming languages, in part or in full.
 
+View the [Quick Start](./quick-start.md) if you just want to get a feel for the syntax. Read [Queries](./queries.md) to get a more in-depth examples of QL's core functionality - queries. Then check out [Modifying data](./modifying-data.md) to see how queries can be used as the basis for updating your data, as well. Beyond that, there are many other pages to explore, with topics delving into problem solving and even making a modern programming language based on QL.
+ 
 # Table of contents
 1. [Introduction](#intoduction)
 2. [Table of contents](#table-of-contents)

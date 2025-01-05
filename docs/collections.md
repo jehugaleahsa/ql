@@ -7,7 +7,7 @@ let x = [1, 2, 3];     # immutable
 let mut y = [1, 2, 3]; # mutable
 ```
 
-Making a vector mutable will allow operations such as `into` (a.k.a., `insert`), `update`, and `delete` to be performed, as explained starting [here](./in-memory-sources.md#appending-values).
+Making a vector mutable will allow operations such as `into` (a.k.a., `insert`), `update`, and `delete` to be performed, as explained starting [here](./modifying-data.md).
 
 ## Vectorized operations
 When adding, subtracting, etc., operations are vectorized. Consider this example:
@@ -17,7 +17,11 @@ let odds = [1, 3, 5, 7, 9];
 let sum = evens + odds; # [1, 5, 9, 13, 17]
 ```
 
-Here, you can see addition is performed element-wise over the two collections.
+Here, you can see addition is performed element-wise over the two collections. Similarly, you can add a scalar to a vector:
+```
+let evens = [0, 2, 4, 6, 8];
+let odds = evens + 1; # [1, 3, 4, 7, 9]
+```
 
 ## Scalars, vectors, matrices, and arrays
 Scalar values always have a "dimension" of 0, and a normal vector has a dimension of 1. Consider these examples:

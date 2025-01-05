@@ -364,6 +364,10 @@ Here is a list of common aggregate functions:
 * `count` - count the number of items in a collection
 * `any` - true if the collection is non-empty
 * `none` - true if the collection is empty
+* `first` - the first value in a collection
+* `last` - the last value in a collection
+* `max` - the largest value in a collection (comparable)
+* `min` - the smallest value in a collection (comparable)
 * `sum` - the sum of the values in the collection (numeric)
 * `average` - the average of the values in the collection (numeric)
 * `product` - the product of the values in the collection (numeric)
