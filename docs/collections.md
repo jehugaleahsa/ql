@@ -205,7 +205,7 @@ let (_, second, ..._) = (1, 2, 3);
 This says to ignore the first value, bind the second value to `second`, and ignore any values that follow.
 
 ## Optional
-You can think of `Optional` as a special type of vector where there is either zero or one elements. `Optional` is used to wrap scalar values when `null` is possible. When `null`, the `Optional` is empty; otherwise, there is exactly one value - the scalar. You rarely need to work directly with an `Optional` because of the many syntactic short-cuts. For example, simply declaring a type with a trailing `?` makes it nullable, and therefore becomes `Optional`. Similarly, the `??` operator allows replacing `null` with another value, and `?.` allows expanding properties on a potentially `null` scalar.
+You can think of `Optional` as a special type of vector holding either zero or one elements. `Optional` is used to wrap scalar values when `null` is possible. In its `None` state (`null`) it holds no element; in its `Some` state it holds exactly one - the scalar. You rarely need to work directly with an `Optional` because of the many syntactic short-cuts. For example, simply declaring a type with a trailing `?` makes it nullable, and therefore becomes `Optional`. Similarly, the `??` operator allows replacing `null` with another value, and `?.` allows expanding properties on a potentially `null` scalar.
 
 Where `Optional` becomes useful is when treating it as a collection. `Optional` provides an `asIterable()` method to provide access to the many collection operations and/or treat it as a source within a query.
 

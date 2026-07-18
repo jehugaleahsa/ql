@@ -35,7 +35,7 @@ View the [Quick Start](./quick-start.md) if you just want to get a feel for the 
     * [Set difference](./combining-collections.md#set-difference)
     * [Zip](./combining-collections.md#zip)
 7. [In-memory sources](./in-memory-sources.md#in-memory-sources)
-    * [Empty collections and null](./in-memory-sources.md#empty-collections-and-null)
+    * [Empty collections](./in-memory-sources.md#empty-collections)
     * [Concatenating](./in-memory-sources.md#concatenating)
     * [Querying](./in-memory-sources.md#querying)
     * [Splicing](./in-memory-sources.md#splicing) 

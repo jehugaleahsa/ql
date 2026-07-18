@@ -17,18 +17,19 @@ let third = values[2];  # 3
 
 The `#` symbol indicates a comment. These are ignored by the compiler. They last until the end of the current line.
 
-## Empty collections and `null`
+## Empty collections
 An empty collection would look like this:
-```
-let empty = []; # compiles
-```
-
-Without values to initialize a collection, its type is determined to be `null`. A `null` collection can be used in the context of any other collection. To give a collection an explicit type, the following syntax is used:
 ```
 let empty: i32[] = [];
 ```
 
-This collection can only be used where a collection of 32-bit integers are expected. More on `i32` when we discuss [primitive types](./primitive-types.md).
+An empty collection is a real collection that simply has zero elements. `[]` is a present value: you can iterate it (zero times), count it (`0`), and reduce it.
+
+Because an empty collection has no elements, its element type cannot be inferred from its contents; it must come from context, such as the `: i32[]` annotation above. Written bare, `[]` is an empty collection of whatever element type the surrounding code expects:
+```
+let evens: i32[] = [];      # an empty i32[]
+let names: String[] = [];   # an empty String[]
+```
 
 ## Concatenating
 Collections are immutable by default. This means the contents of the collection cannot be updated or deleted once initialized.
@@ -110,4 +111,4 @@ let mut values: i32[] = [];
 
 A `mut` collection can be added to, updated, or removed from. 
 
-> **NOTE:** There is no mutable variant of `null`, so a type must be specified if it cannot be inferred.
+> **NOTE:** An empty collection has no elements to infer an element type from, so a mutable one must be given an explicit type when the context does not supply it.
