@@ -20,14 +20,14 @@ Values can be updated in-place using the `update` operation:
 ```
 from values as v
 where v % 2 == 0
-update v (v + 1); # produces [1, 3, 3, 5]
+update v = v + 1; # produces [1, 3, 3, 5]
 ```
 
-The `update` keyword is followed by the value being updated, namely `v` here. After that is the new value. This gets more interesting when working with a complex type:
+The `update` keyword is followed by the target being updated (`v` here), then `=`, then the new value. This gets more interesting when working with a complex type:
 ```
 from customer as c
 where c.id == 123
-update c { ...c, firstName: "Bob" };
+update c = { ...c, firstName: "Bob" };
 ```
 
 Here, we are saying replace the first name of the customer whose `id == 123` with `"Bob"`.
@@ -52,7 +52,7 @@ merge sales_totals as st on st.customerId == c.id
 when c == null && isIncluded then
     select { customerId: c.id, sales: total } into st
 when c != null && isIncluded then
-    update st { ...st, sales: total }
+    update st = { ...st, sales: total }
 when c != null && !isIncluded then
     delete st;
 ```
