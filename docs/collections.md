@@ -132,6 +132,7 @@ Many functions are designed to return `None` when passed `None`. Arithmetic oper
     * `iterator()` - *(required)* gets an iterator that returns `Optional<T>`, yielding `None` once exhausted. The collection controls the order the items are returned.
     * `count()` - the number of elements. A collection may override this with a faster implementation.
     * `reduce(agg)` - folds the elements with an [aggregator](./aggregates.md). The aggregate methods (`sum()`, `average()`, and so on) are sugar over `reduce`.
+    * `scan(agg)` - like `reduce`, but returns each running result - a collection the same length as the source (see [Reduce and scan](./aggregates.md#reduce-and-scan)).
 * `Indexed<K, V>` - Allows a collection to be indexed. For example, vectors are indexed by 0-based position and maps are indexed by their keys. 
 * `Appendable<T>` - Allows a collection to be on the receiving end of an `into` (a.k.a. `insert`) operation. Requires `Iterable<T>`.
     * `add(T)` - adds an item to the collection

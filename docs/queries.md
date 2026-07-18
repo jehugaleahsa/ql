@@ -490,6 +490,8 @@ When a partition alias is indexed, the offsets are measured *relative to the cur
 
 Because a frame is just a sliced collection, you aggregate it with the same methods as any other collection - `.sum()`, `.average()`, `.count()`, and so on. There is no special windowing operator: a "window" is simply a `let` that slices and aggregates the partition.
 
+> **NOTE:** A running frame (`p[..=0]`) is exactly a [scan](./aggregates.md#reduce-and-scan) - the running result at each row - while a whole-partition frame (`p[..]`) is a reduce broadcast to every row. Windowing is `reduce` and `scan` in query form.
+
 > **NOTE:** Ordering changes the *type* of a partition, not merely its contents. Partitioning an ordered stream yields an *ordered* partition, which supports relative frames (`p[..=0]`, `p[-1]`, and the rest); partitioning an unordered stream yields an *unordered* partition, which supports only order-independent aggregates like `p.amount.sum()` over the whole partition. Asking for a relative frame on an unordered partition is a compile-time error - there is no "previous row" to refer to. This mirrors the way an ordered sequence is a distinct, more capable type than an unordered one.
 
 ### Offsets

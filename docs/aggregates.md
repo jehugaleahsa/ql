@@ -132,5 +132,31 @@ Because an aggregator is an ordinary value, a backend can treat it as data:
 * A **SQL** backend maps recognized aggregators to native operations (`Sum` to `SUM`, `Average` to `AVG`, and so on). An aggregator it does not recognize is a capability gap: the backend can pull the rows back and run the aggregator locally, or report that it cannot translate the query.
 * To tailor an aggregator to a specific technology, it may carry backend-specific lowerings. For example, a `Median` aggregator could provide a SQL form (`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ...)`) so that it lowers natively on databases that support it, while still falling back to its `init`/`step`/`combine`/`finish` in memory.
 
-## Relationship to `aggregate` and windows
-The [`aggregate`](./queries.md#aggregation) operation and [window](./queries.md#windows) frames both reduce collections, so they use the same aggregators. `g.count()` after a `group by` and `p[-2..=0].amount.average()` in a window are both `reduce` calls - through their sugar methods - over the appropriate collection. Nothing about aggregation is special-cased; it is `reduce` applied to whatever collection is in hand.
+## Reduce and scan
+An aggregator only says *how* to accumulate; there are two ways to *drive* it across a collection.
+
+**Reduce** collapses the whole collection to a single value - the final accumulator, finished:
+```
+[1, 2, 3, 4].reduce(Sum)   # 10
+```
+
+**Scan** keeps every intermediate result, producing a collection the same length as the input, each element the running result up to that point:
+```
+[1, 2, 3, 4].scan(Sum)     # [1, 3, 6, 10]
+```
+
+`scan` is a `reduce` that emits its progress instead of only its endpoint:
+
+* `xs.scan(agg)[i]` equals `xs[..=i].reduce(agg)` - each scan output is a reduce of a prefix.
+* `xs.reduce(agg)` equals `xs.scan(agg).last()` - reduce is the final element of a scan.
+
+Same aggregator, two drivers: `reduce` observes only the endpoint, `scan` the whole trajectory. Both rely on the associative `combine`, so both parallelize - `reduce` as a tree reduction, `scan` as a parallel prefix scan.
+
+These are the same two drivers behind the query clauses:
+
+| | collapse (reduce) | keep rows (scan) |
+|---|---|---|
+| **query** | `aggregate` | `partition by` + a running frame |
+| **method** | `.reduce(agg)` | `.scan(agg)` |
+
+An [`aggregate`](./queries.md#aggregation) collapses a collection (or each group) to one row - it is `reduce`. A [window](./queries.md#windows) over a *running* frame keeps every row and attaches the result so far - that is `scan`: `p[..=0].amount.sum()` per row is exactly `scan(Sum)` over the partition. Other frame shapes generalize it - a trailing frame `p[-2..=0]` is a sliding-window reduce (cheap when the aggregator is [`Invertible`](#invertible)), and a whole-partition frame `p[..]` is a reduce broadcast to every row. All of them use the same aggregators; nothing is special-cased.
