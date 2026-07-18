@@ -327,8 +327,8 @@ In the example above, we are grouping the entire customer (`c`) by its `firstNam
 Things can get more interesting when multiple entities are joined together. For example:
 ```
 let ordersByCustomer = 
-    from customer as c
-    join order as o on c.id == o.customerId
+    from customers as c
+    join orders as o on c.id == o.customerId
     group o by c;
 ```
 
@@ -337,8 +337,8 @@ In this example, we are grouping the orders by their customers. Since we put `o`
 If we want to group by customer, but only using the customer's first name, we use `on`:
 ```
 let ordersByCustomer =
-    from customer as c
-    join order as o on c.id == o.customerId
+    from customers as c
+    join orders as o on c.id == o.customerId
     group o by c on c.firstName;
 ```
 
@@ -348,8 +348,8 @@ In the previous examples, after a `group by`, we are no longer working with a on
 For example, here's how we can count the orders for each customer:
 ```
 let customerOrderCounts =
-    from customer as c
-    join order as o on c.id == o.customerId
+    from customers as c
+    join orders as o on c.id == o.customerId
     group o by c as g
     aggregate {
         customer: g.key,

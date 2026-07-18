@@ -90,7 +90,7 @@ In the example above, since `DBModel` already defines an `id` property, it does 
 ## Anonymous types
 Within [queries](./queries.md), defining anonymous types is quite common. For example:
 ```
-from customer as c
+from customers as c
 select {
     id: c.id,
     firstName: c.firstName

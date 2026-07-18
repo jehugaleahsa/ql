@@ -25,7 +25,7 @@ update v = v + 1; # produces [1, 3, 3, 5]
 
 The `update` keyword is followed by the target being updated (`v` here), then `=`, then the new value. This gets more interesting when working with a complex type:
 ```
-from customer as c
+from customers as c
 where c.id == 123
 update c = { ...c, firstName: "Bob" };
 ```
