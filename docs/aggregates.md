@@ -39,8 +39,8 @@ The `combine` step is what makes an aggregator *parallelizable*. Because it is a
 
 Some examples:
 
-* `Sum` - `init = 0`, `step = (a, x) => a + x`, `combine = (a, b) => a + b`, `finish = a => a`.
-* `Average` - accumulates a running sum and count (`Acc = (f64, usize)`), then `finish = (sum, count) => sum / count`. This is precisely why `average` cannot be a plain keyword but *is* a trivial aggregator.
+* `Sum` - `init = fn() => 0`, `step = fn(a, x) => a + x`, `combine = fn(a, b) => a + b`, `finish = fn(a) => a`.
+* `Average` - accumulates a running sum and count (`Acc = (f64, usize)`), then `finish = fn(acc) => acc._0 / acc._1`. This is precisely why `average` cannot be a plain keyword but *is* a trivial aggregator.
 * `Median` - accumulates all values, then computes the middle in `finish`.
 
 ## Backends

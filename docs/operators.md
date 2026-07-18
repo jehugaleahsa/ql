@@ -65,10 +65,6 @@ QL allows computing arithmetic on numeric primitive values.
 
 > See [Ranges](./ranges.md) for how these operators are used to generate sequences, slice collections, and define window frames.
 
-## Lambdas
-
-* `=>` - define an inline function
-
 ## Precedence
 
 Parentheses can be used to control precedence, such that `(2 + 3) * 5 == 25`. Normally, `*` has a higher precedence than `+`, so `2 + 3 * 5 == 17` instead. Precedence in QL is as follows, from highest to lowest:
@@ -107,4 +103,3 @@ Parentheses can be used to control precedence, such that `(2 + 3) * 5 == 25`. No
 * `x ?? y`
 * `x .. y`
 * `x ..= y`
-* `=>`
