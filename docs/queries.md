@@ -421,3 +421,97 @@ select v; # [1, 2, 3]
 ```
 
 ## Windows
+A `window` computes a value *for each row* using a set of related rows around it - called a *frame* - without collapsing rows the way a `group by` does. Where a `group by` turns many rows into one row per group, a window keeps every row and simply attaches a computed value to it.
+
+Because of this, a window fits naturally into the same slot as a `let`: it *adds* a value to each row while leaving every prior alias in scope. Contrast this with `group by`, which replaces the scope entirely (see the [note below](#windows-and-scope)).
+
+A window is built from up to three parts:
+
+* `partition by` - splits rows into independent partitions. This is like `group by`, except the rows are *not* collapsed; the window simply restarts at each partition boundary.
+* `order by` - orders the rows within each partition. This is required for anything running, ranking, or offset-based.
+* a *frame* - the subset of the partition that a given row can see, written as a slice relative to the current row.
+
+The frame reuses the same slice syntax used elsewhere (see [Splicing](./in-memory-sources.md#splicing)). The current row is offset `0`, preceding rows are negative, and following rows are positive. Open-ended ranges reach to the start or end of the partition:
+
+* `[..=0]` - from the start of the partition through and including the current row (a *running* frame)
+* `[-2..=0]` - the current row and the two preceding it (a trailing frame of three)
+* `[0..]` - the current row through the end of the partition
+* `[..]` - the entire partition
+
+Here we compute a running total and a three-row moving average of order amounts for each customer:
+```
+from orders as o
+partition by o.customerId
+order by o.date
+let runningTotal = sum(o.amount) over [..=0]
+let movingAvg = average(o.amount) over [-2..=0]
+select { ...o, runningTotal, movingAvg };
+```
+
+Because the current row is `0`, and `..=` includes its endpoint, `[..=0]` covers every row from the start of the partition through the current one - a running total. Note that all of `o`'s properties remain available; the window only *adds* `runningTotal` and `movingAvg`.
+
+A frame covering the whole partition (`[..]`) reduces the partition to a single value and shares it back across every row. This is handy for computing each row's share of a total:
+```
+from orders as o
+partition by o.customerId
+let share = o.amount / (sum(o.amount) over [..])
+select { ...o, share };
+```
+
+> **NOTE:** A whole-partition frame does not require an `order by`, since the frame is the same regardless of order. A running or trailing frame does require one, so the "preceding" and "following" rows are well-defined.
+
+Ranking is expressed as a running count. Since `count()` over a running frame increases by one for each row, it produces a row number within the partition:
+```
+from orders as o
+partition by o.customerId
+order by o.date
+let rowNumber = count() over [..=0]
+select { ...o, rowNumber };
+```
+
+### Offsets
+A frame that selects a *single* row returns that row's value directly, rather than a collection. This is how you look at a neighboring row (what SQL calls `lag` and `lead`):
+```
+from orders as o
+partition by o.customerId
+order by o.date
+let previousAmount = o.amount over [-1]  # the prior order's amount, or null at the partition's first row
+select { ...o, previousAmount };
+```
+
+At the edges of a partition, a neighboring row may not exist. In that case the value is `null`, and the usual [null-safety rules](#null-safety) apply - so `previousAmount` above is inferred as nullable, and must be checked or defaulted (e.g., with `??`) before use.
+
+### Row frames vs. value frames
+The frames shown so far count *rows*: the offset `-2` means "two rows back," so `[-2..=0]` is always exactly three rows. Sometimes you instead want a frame defined by the *ordering value* - for example, "every order within the previous week," which may match any number of rows (including none). These two interpretations are genuinely different, and conflating them is a common source of confusion in SQL (its `ROWS` vs. `RANGE`).
+
+QL distinguishes the two by what the frame is written against, with no extra keyword:
+
+* A frame of bare offsets counts **rows**. `[-2..=0]` is the current row and the two rows before it.
+* A frame written in terms of the ordering expression counts by **value**. Assuming orders are ordered by an integer `day`, the following frame covers every order in the current order's week, however many that is:
+
+```
+from orders as o
+partition by o.customerId
+order by o.day
+let weeklyTotal = sum(o.amount) over [o.day - 6 ..= o.day]
+select { ...o, weeklyTotal };
+```
+
+The rule for reading a value frame: the expressions *inside* the frame brackets are evaluated for the current row - they define the frame - while the aggregate's argument (`o.amount` above) ranges over the rows the frame selects. So `[o.day - 6 ..= o.day]` means "every order in this partition whose `day` falls between this order's `day` minus six and this order's `day`."
+
+Because a value frame selects by magnitude, all rows sharing an ordering value (peers) naturally fall in the frame together - which is usually the reason to prefer a value frame over a row frame in the first place.
+
+Row and value frames line up shape-for-shape, differing only in axis:
+
+* `[..=0]` (row) and `[..= o.day]` (value) - a running frame, from the start of the partition through the current row.
+* `[-2..=0]` (row) and `[o.day - 2 ..= o.day]` (value) - a trailing frame.
+* `[..]` - the whole partition, which needs no anchor and so reads the same either way.
+
+> **NOTE:** Single-offset lookups like `over [-1]` are inherently a *row* operation - they name one neighboring row - so they have no value-frame form. A value "offset" could match zero or many rows, which is what the range forms above express instead.
+
+See [Ranges](./ranges.md#position-vs-value) for the general position-vs-value distinction that underlies this.
+
+### Windows and scope
+A `window` is unusual among query operations. Most operations either leave the set of available aliases untouched (like `where`), extend it (like `let` and `join`), or replace it (like `select`, `group by`, and `aggregate`). A window *extends* the scope - it adds a value while keeping every existing alias - even though, internally, it performs an aggregation over the frame.
+
+This is what makes a window feel different from a `group by` despite doing similar work under the hood. A `group by` replaces the current row with a group, so prior aliases are only reachable through the group's `key` (or by iterating the group). A window keeps the row, so nothing goes out of scope; the frame it aggregates over is transient and never becomes an alias of its own. In short, a window is like a fused `group by`/`aggregate` that preserves rows instead of collapsing them.

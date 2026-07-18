@@ -63,6 +63,8 @@ QL allows computing arithmetic on numeric primitive values.
 * `..` - Define a numeric range, with an excluded end value, with an optional `:` for controlling the increment.
 * `..=` - Define a numeric range, with an included end value, with an optional `:` for controlling the increment.
 
+> See [Ranges](./ranges.md) for how these operators are used to generate sequences, slice collections, and define window frames.
+
 ## Lambdas
 
 * `=>` - define an inline function

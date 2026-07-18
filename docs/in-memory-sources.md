@@ -54,17 +54,20 @@ let evens =
 ## Splicing
 A new collection can also be created using splices. Here are some example splices:
 ```
-let a = values[..2];  # produces [1, 2, 3]
-let b = values[1..];  # produces [2, 3, 4]
-let c = values[1..2]; # produces [2, 3]
-let d = values[..]    # produces [1, 2, 3, 4]
-let e = values[0..:2] # produces [1, 3]
-let f = values[..:-1] # produces [4, 3, 2, 1]
+let a = values[..2];   # produces [1, 2]        (end index excluded)
+let b = values[1..];   # produces [2, 3, 4]     (index 1 through the end)
+let c = values[1..3];  # produces [2, 3]        (indices 1 and 2; end excluded)
+let d = values[1..=3]; # produces [2, 3, 4]     (indices 1, 2, and 3; end included)
+let e = values[..];    # produces [1, 2, 3, 4]  (everything)
+let f = values[0..:2]; # produces [1, 3]        (every other element)
+let g = values[..:-1]; # produces [4, 3, 2, 1]  (reversed, via a step of -1)
 ```
+
+> **NOTE:** A `..` range *excludes* its end, while a `..=` range *includes* it. This is why `values[0..2]` yields two elements while `values[0..=2]` yields three. Excluding the end is convenient for counts, since `0..n` always produces exactly `n` elements. Omitting either bound (as in `[..2]`, `[1..]`, or `[..]`) uses the collection's own start or end. An optional step can follow a `:`, and a negative step walks the collection in reverse. See [Range operators](./operators.md#range-operators).
 
 We can assign multiple variables at once using this syntax:
 ```
-let [first, second, third] = values[0..2];
+let [first, second, third] = values[0..3]; # binds 1, 2, 3
 ```
 
 Using the splice syntax, the number of elements in the range must match the number of variables being defined; otherwise, an error occurs.
