@@ -77,3 +77,28 @@ let combined =
     where s == null
     select f; # -> [{ id: 1 }]
 ```
+
+## Zip
+The operations above combine collections by *content* - matching or comparing values. `zip` instead combines them by *position*: it pairs the first element of one collection with the first of another, the second with the second, and so on. It turns two collections into one collection of pairs:
+```
+let numbers = [1, 2, 3];
+let letters = ['a', 'b', 'c'];
+let paired =
+    from numbers as n
+    zip letters as l
+    select { n, l }; # [{ n: 1, l: 'a' }, { n: 2, l: 'b' }, { n: 3, l: 'c' }]
+```
+
+Where a `join` pairs elements by a condition (producing every matching combination), `zip` pairs them by their order alone. For that reason `zip` requires ordered collections; zipping an unordered [set](./collections.md#set) is not meaningful.
+
+A `zip` pairs the new collection against the *whole query so far*, not just the immediately preceding source. So when a `zip` follows a `join`, it zips the joined rows against the new collection:
+```
+from customers as c
+join orders as o on c.id == o.customerId
+zip trackingNumbers as t   # pair each customer/order row with a tracking number, positionally
+select { c, o, t };
+```
+
+If the two collections differ in length, `zip` stops at the shorter one. When both are fixed-size arrays their lengths are known at compile time, so the result length is known as well - see [SIMD](./simd.md).
+
+> **NOTE:** The special case of pairing each element with its index (what some languages call `enumerate`) needs no dedicated operation: zip against an index [range](./ranges.md), as in `from values as v zip 0.. as i`.
