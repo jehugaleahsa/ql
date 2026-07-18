@@ -47,12 +47,13 @@ QL allows computing arithmetic on numeric primitive values.
 
 * `=` - assignment, such as `let x = 123;`
 
-## Null checking
+## Optionals and pattern tests
 
-* `??` - null coalesce, such as `null ?? 123` equaling 123
-* `?.` - null-safe member accessor, such as `x?.y`
-* `?[]` - null-safe index accessor, such as `x?[0]`
-* `!` - explicitly mark a value non-null, such as `x!.y`
+* `??` - coalesce: replace `None` with a fallback, such as `None ?? 123` equaling `123`
+* `?.` - optional member access, such as `x?.y` (yields `None` when `x` is `None`)
+* `?[]` - optional index access, such as `x?[0]`
+* `!` - assert the `Some` variant, such as `x!.y` (fails if `x` is `None`)
+* `x is P` - true if `x` matches pattern `P`, binding any variables in `P` for the rest of the scope, such as `x is Some(v)`
 
 ## Matrix and array operators
 
@@ -98,6 +99,7 @@ Parentheses can be used to control precedence, such that `(2 + 3) * 5 == 25`. No
 * `x ^ y`
 * `x | y`
 * `x < y`, `x > y`, `x <= y`, `x >= y`, `x == y`, `x != y` (non-associative; comparisons cannot be chained)
+* `x is P`
 * `x && y`
 * `x || y`
 * `x ?? y`

@@ -167,25 +167,34 @@ select c;
 
 > **NOTE:** The same cannot be said for `or`.
 
-### Null safety
-QL does not allow inspecting members when a value can be `null`. For example, if a customer can be null, inspecting its orders cannot be performed until after checking for null. Consider:
+### Optionals
+QL does not allow inspecting members of a value that might be absent until you have confirmed it is present. For example, if a customer might be `None`, its orders cannot be inspected until the `Some` case is established. The `is` operator both tests the variant and binds its payload:
 ```
-from customers as c?
-where c != null
+from customers as customer?
+where customer is Some(c)
 from c.orders as o
 select o;
 ```
 
-First, note that the alias `c` is followed by a `?`. This indicates to QL that you are aware `c` can be `null` - it's considered an error if the `?` is missing. We then check for `null` in the `where`. Since the `where` filters out `null` customers, all subsequent operations in the query are okay assuming `c` cannot be `null`.
+The alias `customer` is followed by a `?`, declaring that `customer` is optional (`Customer?`) - it is an error to treat a `Customer?` as a `Customer` without first handling the absent case. `where c is Some(c)` keeps only the rows where `cusomer` is present and binds the inner value to `c`, a plain `Customer` for the rest of the query. A bound variable is usable immediately, so `where c is Some(customer) and customer.isLoyal` filters in a single clause.
 
-Another option is to substitute `null` with an alternative value, as such:
+Because a pattern in a `from` also filters, the same query reads even more directly by matching in the source itself:
+```
+from customers as Some(customer)
+from customer.orders as o
+select o;
+```
+
+Here only the present customers flow through, each already unwrapped to `customer`.
+
+Another option is to substitute a value for the absent case rather than filtering it out:
 ```
 from customers as c?
 from (c?.orders ?? []) as o
 select o;
 ```
 
-The `?.` operator causes any operations on a `null` to be replaced with a `null`, and the `??` operator says to replace `null` with the value on the right. Essentially, if `c` is `null`, the whole expression evaluates to an empty collection.
+The `?.` operator turns a member access on `None` into `None`, and the `??` operator replaces `None` with the value on its right. So if `c` is `None`, `c?.orders` is `None` and `?? []` makes the whole expression an empty collection.
 
 ## Distinct
 Unique values can be retrieved using a `distinct` operation. For example:
@@ -241,7 +250,7 @@ Here we are basically iterating over *every* order for *every* customer, matchin
 Also note that each time a `join` is performed, a new alias is created. In our examples, a new alias for `o` is created. After that point, both `c` and `o` can be used in subsequent operations. It's common for there to be many joins in a query, with just as many aliases.
 
 ## Left join
-What if we wanted to return all customers, regardless of whether they had any orders? In other words, if a customer had orders, we would still get back every customer/order combination; however, for customers missing orders, we still want to get back one record, where the order is just `null`.
+What if we wanted to return all customers, regardless of whether they had any orders? In other words, if a customer had orders, we would still get back every customer/order combination; however, for customers missing orders, we still want to get back one record, where the order is `None`.
 
 The `left join` operation does just that:
 ```
@@ -250,9 +259,9 @@ left join orders as o on c.id == o.customerId
 select { customer: c, order: o };
 ```
 
-An interesting aspect of left joins is that the joined collection item (`o` in this case) is implicitly nullable afterward. So, if `orders` is `Order[]`, then `o` will be treated as `Order?`. Any operations on `o` for the rest of the query (after the `on` clause) must check for `null`. Within the `on` clause, though, `o` can be treated `Order`.
+An interesting aspect of left joins is that the joined collection item (`o` in this case) is implicitly optional afterward. So, if `orders` is `Order[]`, then `o` will be treated as `Order?`. Any operations on `o` for the rest of the query (after the `on` clause) must first establish the `Some` case (e.g. `where o is Some(order)`). Within the `on` clause, though, `o` can be treated as `Order`.
 
-**NOTE:** The only caveat is if `orders` is `Order?[]` to begin with, in which case the alias must be declared `o?` and `null` handled within the `on` clause. This should rarely be the case, as `null` records are uncommon in practice.
+**NOTE:** The only caveat is if `orders` is `Order?[]` to begin with, in which case the alias must be declared `o?` and the `None` case handled within the `on` clause. This should rarely be the case, as `None` records are uncommon in practice.
 
 > **NOTE:** A right join can be simulated by reversing the order collections are joined.
 
@@ -271,11 +280,11 @@ let assignedRoles =
     from userRoles as ur
     full join groupRoles as gr on ur.id == gr.id
     let r = ur ?? gr
-    where r != null
-    select r;
+    where r is Some(role)
+    select role;
 ```
 
-After the `on` clause, both `ur` or `gr` can potentially be `null`, but not both - try to understand why. The compiler doesn't know that only one can be `null`, though. In the example, we use the `??` operator to grab whichever value is non-null first and check for `null` using `where r != null`, but we also could have used the `!` suffix operator to express our intent, like so:
+After the `on` clause, both `ur` or `gr` can potentially be `None`, but not both - try to understand why. The compiler doesn't know that only one can be `None`, though. In the example, we use the `??` operator to grab whichever value is present first and confirm presence using `where r is Some(role)`, but we also could have used the `!` suffix operator to express our intent, like so:
 ```
 # ... same as before
 let assignedRoles =
@@ -491,7 +500,7 @@ let previousAmount = p[-1]?.amount  # the prior order's amount
 select { ...o, previousAmount };
 ```
 
-At the edges of a partition a neighboring row may not exist - `p[-1]` is `null` at the first row - so the usual [null-safety rules](#null-safety) apply. That is why `p[-1]?.amount` uses `?.`, and `previousAmount` is inferred as nullable.
+At the edges of a partition a neighboring row may not exist - `p[-1]` is `None` at the first row - so the usual [optional rules](#optionals) apply. That is why `p[-1]?.amount` uses `?.`, and `previousAmount` is inferred as optional.
 
 ### Row frames vs. value frames
 The frames above count *rows*: the offset `-2` means "two rows back," so `p[-2..=0]` is always exactly three rows. Sometimes you instead want a frame defined by the *ordering value* - for example, "every order within the previous week," which may match any number of rows (including none). These two interpretations are genuinely different, and conflating them is a common source of confusion in SQL (its `ROWS` vs. `RANGE`).

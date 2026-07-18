@@ -136,7 +136,7 @@ A `String` can be converted to a numeric value using a `tryParse` operation:
 let i = i32::tryParse("123");
 ```
 
-The type of `i` will be `i32?`, meaning a "nullable" integer. Learn more about `null` in the section about [vectors](./collections.md).
+The type of `i` will be `i32?`, meaning an optional integer. Learn more about `None` and optionals in the section on [None](./collections.md#none).
 
 ### Overflow/Underflow
 By default, a program will panic, leading to termination, if a conversion results in overflow or underflow (the representation cannot hold the previous value). An operation can be wrapped in an `unchecked` expression to prevent this from happening:

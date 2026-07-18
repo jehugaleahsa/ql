@@ -49,10 +49,10 @@ let total =
     aggregate o.totalAmount.sum()
 let isIncluded = total > 1000
 merge sales_totals as st on st.customerId == c.id
-when c == null && isIncluded then
+when c is None && isIncluded then
     select { customerId: c.id, sales: total } into st
-when c != null && isIncluded then
+when c is Some(_) && isIncluded then
     update st = { ...st, sales: total }
-when c != null && !isIncluded then
+when c is Some(_) && !isIncluded then
     delete st;
 ```

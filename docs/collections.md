@@ -93,43 +93,43 @@ m @ n # [[22, 49], [28, 64]]
 
 The result of broadcasting can be surprising when working with higher dimensions, so merit some experimentation.
 
-## Null
-The literal `null` represents no value.
+## None
+The value `None` represents the absence of a value - the empty variant of [`Optional`](./unions.md#optional).
 
-> **NOTE:** Unlike SQL, `null == null` returns `true` in QL.
+> **NOTE:** Unlike SQL, `None == None` returns `true` in QL. Absence is an ordinary value that compares equal to itself, not SQL's three-valued "unknown".
 
 When declaring a variable (with `let`), the type can be specified explicitly:
 ```
 let x: i32 = 123;
 ```
 
-If `x` in the example above can also be `null`, it should be declared like this:
+If `x` in the example above can also be absent, it should be declared optional with a trailing `?`:
 ```
-let x: i32? = getValueOrNull();
+let x: i32? = tryGetValue();
 ```
 
-Under the hood, the type is actually `Optional<i32>`, where `null` is the special marker for when no value is present, so `T?` is just a syntactic sugar. 
+Under the hood, `i32?` is `Optional<i32>` - the union `Some(i32) | None` - so `T?` is just syntactic sugar and `None` is its empty variant.
 
 ### Lifted arithmetic operations
-Performing arithmetic operations on `null` results in `null`.
+Arithmetic operations lift over `None`: if any operand is `None`, the result is `None`.
 ```
-1 + null + 2 # null
+1 + None + 2 # None
 ```
 
-If a `null` appears anywhere within an arithmetic operation, the whole expression becomes `null`.
+So if a `None` appears anywhere within an arithmetic expression, the whole expression becomes `None`.
 
-Some conversion operations will return `null` if the conversion fails:
+Some conversion operations return `None` when the conversion fails:
 ```
 let bad = "12abc";      # this won't parse
-i32::tryParse(bad) + 23 # null
+i32::tryParse(bad) + 23 # None
 ```
 
-Many functions are designed to return `null` when passed `null` values. Arithmetic functions are just another form of function.
+Many functions are designed to return `None` when passed `None`. Arithmetic operators are just another form of function.
 
 ## Common collection traits
 
 * `Iterable<T>` - the elements can be iterated over. Implementing its one required method, `iterator()`, unlocks the rest as defaults.
-    * `iterator()` - *(required)* gets an iterator that returns `Optional<T>`, yielding `null` once exhausted. The collection controls the order the items are returned.
+    * `iterator()` - *(required)* gets an iterator that returns `Optional<T>`, yielding `None` once exhausted. The collection controls the order the items are returned.
     * `count()` - the number of elements. A collection may override this with a faster implementation.
     * `reduce(agg)` - folds the elements with an [aggregator](./aggregates.md). The aggregate methods (`sum()`, `average()`, and so on) are sugar over `reduce`.
 * `Indexed<K, V>` - Allows a collection to be indexed. For example, vectors are indexed by 0-based position and maps are indexed by their keys. 
@@ -205,11 +205,11 @@ let (_, second, ..._) = (1, 2, 3);
 This says to ignore the first value, bind the second value to `second`, and ignore any values that follow.
 
 ## Optional
-You can think of `Optional` as a special type of vector holding either zero or one elements. `Optional` is used to wrap scalar values when `null` is possible. In its `None` state (`null`) it holds no element; in its `Some` state it holds exactly one - the scalar. You rarely need to work directly with an `Optional` because of the many syntactic short-cuts. For example, simply declaring a type with a trailing `?` makes it nullable, and therefore becomes `Optional`. Similarly, the `??` operator allows replacing `null` with another value, and `?.` allows expanding properties on a potentially `null` scalar.
+You can think of `Optional` as a special type of vector holding either zero or one elements. `Optional` wraps scalar values that may be absent. In its `None` state it holds no element; in its `Some` state it holds exactly one - the scalar. You rarely need to work directly with an `Optional` because of the many syntactic short-cuts. For example, declaring a type with a trailing `?` makes it optional, and therefore an `Optional`. Similarly, the `??` operator replaces `None` with another value, and `?.` expands properties on a potentially `None` scalar.
 
 Where `Optional` becomes useful is when treating it as a collection. `Optional` provides an `asIterable()` method to provide access to the many collection operations and/or treat it as a source within a query.
 
-> **NOTE:** `Optional<T>` is fundamentally the union `Some(T) | None`, and `null` is its `None` variant. The "special vector" view here is just a convenient way to treat it as a zero-or-one collection. See [Unions](./unions.md#optional-and-null).
+> **NOTE:** `Optional<T>` is fundamentally the union `Some(T) | None`. The "special vector" view here is just a convenient way to treat it as a zero-or-one collection. See [Unions](./unions.md#optional).
 
 ## Set
 A set is similar to a vector except each value must be unique and the order the elements appear may not be guaranteed.
@@ -276,11 +276,11 @@ let mut customerLookup = Map.from(
     select (c.id, c) # Select a tuple of key/value pairs
 );
 
-# Find the customer with an ID of 123 - could be null
+# Find the customer with an ID of 123 - could be None
 let customer123 = customerLookup[123];
 
 from customerLookup as l
-where customer123 != null
-where l.id == customer123.id
+where customer123 is Some(c)
+where l.id == c.id
 delete l;
 ```

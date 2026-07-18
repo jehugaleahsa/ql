@@ -37,7 +37,7 @@ Taking the first `8` of `filled` yields a full-width chunk. For a reduction, pad
 > **NOTE:** This is the second reason `identity` earns its place on the aggregate interface: beyond enabling parallel reduction, it makes the ragged tail of a vectorized loop safe to pad. And because padding is only `concat` plus a lazy `repeat`, it is the same tool that reconciles any ragged edge - including an unequal-length [`zip`](./combining-collections.md#zip).
 
 ## Overlapping windows
-`chunks<N>` produces *non-overlapping* tiles. A related reshaper, `windows<N>`, produces *overlapping* fixed-size windows - the current element together with its neighbors - which suits fixed-width moving computations that should skip, rather than shrink at, the edges. Overlapping windows vectorize less cleanly than tiles because of the repeated loads, but the fixed size still removes the edge-nullability that the variable [window frames](./queries.md#windows) carry.
+`chunks<N>` produces *non-overlapping* tiles. A related reshaper, `windows<N>`, produces *overlapping* fixed-size windows - the current element together with its neighbors - which suits fixed-width moving computations that should skip, rather than shrink at, the edges. Overlapping windows vectorize less cleanly than tiles because of the repeated loads, but the fixed size still removes the optional edges (the `None`s) that the variable [window frames](./queries.md#windows) carry.
 
 ## Combining inputs
 Element-wise operations over two chunk streams are multi-input SIMD. [Zipping](./combining-collections.md#zip) two chunked collections and operating lane-wise is how something like a dot product vectorizes without intrinsics:

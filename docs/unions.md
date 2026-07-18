@@ -34,21 +34,21 @@ let area = match shape {
 
 Because a `match` must be [exhaustive](./conditionals.md#exhaustiveness), leaving out a variant is a compile-time error - and *adding* a variant to the union later forces every `match` over it to be updated. This is the main safety benefit of a union over an untyped tag: the compiler tracks the full set of cases for you.
 
-## Optional and null
+## Optional
 `Optional` is the most common union in the language:
 ```
 let Optional<T> = Some(T) | None;
 ```
 
-The `T?` type is sugar for `Optional<T>`, and the literal `null` is the `None` variant. So a nullable value is simply a two-variant union, and the null operators are `match` in disguise:
+The `T?` type is sugar for `Optional<T>`, and `None` is how absence is written. So an optional value is simply a two-variant union, and the optional operators are `match` in disguise:
 
 * `x ?? d` is `match x { Some(v) => v, None => d }`.
 * `x?.field` is `match x { Some(v) => Some(v.field), None => None }`.
 * `x!` asserts the `Some` variant, and fails if it is `None`.
 
-Checking `x != null` narrows `x` from `T?` to `T` for the rest of the scope (see [null safety](./queries.md#null-safety)) - the same narrowing a `match` performs when it enters the `Some` arm.
+To test and unwrap in one step, use `is` with a pattern: `x is Some(v)` is true when `x` is present and binds `v` to the inner value for the rest of the scope, so `x is Some(v) and v > 100` filters and reuses `v` together. Use `x is Some(_)` when you only need to know it is present, `x is None` for the absent case, and `x is not None` to keep everything present without binding (see [Optionals](./queries.md#optionals)).
 
-> **NOTE:** This clears up one of QL's "kinds of nothing": `null` is exactly `Optional`'s `None`.
+> **NOTE:** This is how QL avoids a `null` value entirely: absence is `Optional`'s `None` variant, handled by the same `match`/`is` machinery as any other union - no special null rules, and no null-dereference class of bug.
 
 ## Unions of existing types
 A variant does not have to be a purpose-built constructor; a union can also combine existing types directly:

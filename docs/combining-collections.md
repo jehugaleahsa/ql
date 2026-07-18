@@ -63,7 +63,7 @@ let second = [2, 3, 4];
 let combined = 
     from first as f
     left join second as s on f == s
-    where s == null
+    where s is None
     select f; # [1]
 ```
 
@@ -74,7 +74,7 @@ let second: Thing[] = [{ id: 2 }, { id: 3 }];
 let combined =
     from first as f
     left join second as s on f.id == s.id
-    where s == null
+    where s is None
     select f; # -> [{ id: 1 }]
 ```
 

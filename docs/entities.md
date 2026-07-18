@@ -21,7 +21,7 @@ let Address = struct {
 };
 ```
 
-> **NOTE:** If a property's value can be `null`, put a `?` after the type to indicate it. Alternatively, you can say `Optional<T>`.
+> **NOTE:** If a property's value can be absent, put a `?` after the type to make it optional. Equivalently, you can write `Optional<T>`.
 
 Now, we can update our `Customer` entity to look like this:
 ```
@@ -144,7 +144,7 @@ select {
 };
 ```
 
-Here, we are creating an anonymous type from a `Customer` with only two properties, `id` and `firstName`. The types of `id` and `firstName` are inferred automatically, including whether a `null` is possible. Being anonymous, these types cannot be constructed outside of a query by name.
+Here, we are creating an anonymous type from a `Customer` with only two properties, `id` and `firstName`. The types of `id` and `firstName` are inferred automatically, including whether each is optional. Being anonymous, these types cannot be constructed outside of a query by name.
 
 ## Copying
 In many operations, it's common to treat entities as immutable. Instead of directly updating a property, you can make a copy of an object, changing the value of individual properties instead:

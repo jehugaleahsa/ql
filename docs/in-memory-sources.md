@@ -90,10 +90,10 @@ let [first, ..._] = values;
 
 Finally, if the number of elements in a collection is unknown, the `?` operator can be used to indicate the value is optional:
 ```
-let [first?, ..._] = []; # first will be `null`
+let [first?, ..._] = []; # first will be `None`
 ```
 
-A check must be performed on nullable variables before accessing their values. The `??` operator can also be used to provide a default value when needed:
+A `first?` binding produces an `Optional`, so confirm it is `Some` (for example with `is Some(v)`) before accessing it. The `??` operator can also be used to provide a default value when needed:
 ```
 let first = first ?? 0;
 ``` 

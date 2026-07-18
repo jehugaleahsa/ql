@@ -94,10 +94,10 @@ A *derived* aggregator is built by combining existing aggregators; it never writ
 * **Output map** - `agg.map(finisher)` transforms an aggregator's result after it finishes.
 * **Input map** - `agg.on(projection)` adapts what an aggregator reads from each element, so that sub-aggregators of a product can read the same element differently.
 
-`Average` is the canonical derived aggregator: run `Sum` and `Count` together, then divide. It returns `f64?` - an empty collection has a count of zero, so the finisher yields `null` rather than dividing by zero:
+`Average` is the canonical derived aggregator: run `Sum` and `Count` together, then divide. It returns `f64?` - an empty collection has a count of zero, so the finisher yields `None` rather than dividing by zero:
 ```
 let Average = (Sum, Count).map(fn(acc) =>
-    if acc._1 == 0 { null } else { acc._0 / acc._1 as f64 }
+    if acc._1 == 0 { None } else { acc._0 / acc._1 as f64 }
 );
 ```
 
@@ -106,14 +106,14 @@ let Average = (Sum, Count).map(fn(acc) =>
 let Variance =
     (Sum.on(fn(x) => x * x), Sum, Count).map(fn(acc) => {
         let (sumSq, sum, n) = acc;
-        if n == 0 { null } else {
+        if n == 0 { None } else {
             let nf = n as f64;
             sumSq / nf - (sum / nf) ** 2
         }
     });
 ```
 
-> **NOTE:** Because their finishers can yield `null`, `Average` and `Variance` produce `f64?`. Any aggregator that divides by a count should guard the empty collection this way; the [null-safety rules](./queries.md#null-safety) then carry the `null` through any downstream expression.
+> **NOTE:** Because their finishers can yield `None`, `Average` and `Variance` produce `f64?`. Any aggregator that divides by a count should guard the empty collection this way; the [optional rules](./queries.md#optionals) then carry the `None` through any downstream expression.
 
 Deriving aggregators is more than convenience. Because a derived aggregator is built from visible parts, the compiler can *share* those parts. When an [`aggregate`](./queries.md#aggregation) block requests `sum`, `count`, and `average` together, it can see that `Average` is made of the same `Sum` and `Count` as the standalone fields, and maintain just one running sum and one running count for all three. A monolithic `Average` that hid its own sum and count would force a second, redundant pair. This is why the standard library favors deriving aggregators from smaller ones rather than writing each from scratch.
 
