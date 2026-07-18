@@ -196,9 +196,9 @@ distinct c on c.firstName;
 
 What if we wanted to just return the unique first names? We would first need to map from a customer to their first names, then use `distinct`:
 ```
-from customer as c
-select c.firstName as fn
-distinct fn;
+from customers as c
+select c.firstName as name
+distinct name;
 ```
 
 ## Join
