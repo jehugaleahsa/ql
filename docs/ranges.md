@@ -74,28 +74,28 @@ let f = values[..];  # [10, 20, 30, 40] (everything)
 See [Splicing](./in-memory-sources.md#splicing) for more on slicing collections.
 
 ## Ranges as window frames
-A [window](./queries.md#windows) uses a range to describe its *frame* - the set of rows around the current row that a computation can see. In this position, the range is measured relative to the current row rather than to position `0`:
+A [window](./queries.md#windows) slices a *partition* - the collection of related rows, bound with `partition by ... as p` - to produce the *frame* a computation sees. In this position the slice is measured relative to the current row rather than to position `0`:
 ```
 from orders as o
-partition by o.customerId
+partition by o.customerId as p
 order by o.date
-let movingAvg = o.amount.average() over [-2..=0] # current row and the two before it
+let movingAvg = p[-2..=0].amount.average() # current row and the two before it
 select { ...o, movingAvg };
 ```
 
-Here `0` is the current row, negative offsets are preceding rows, and positive offsets are following rows. See [Windows](./queries.md#windows) for the full treatment.
+Here `0` is the current row, negative offsets are preceding rows, and positive offsets are following rows. Because the frame is just a slice of `p`, it inherits the [position-vs-value](#position-vs-value) distinction like any other range. See [Windows](./queries.md#windows) for the full treatment.
 
 ## Position vs. value
 This is the distinction that ties everything together, and the one most worth internalizing. A range always ranges over *some axis*, and there are two axes it might use:
 
-* **Position** - the range counts elements. `values[1..3]` takes the elements *at* positions 1 and 2. A window frame `[-2..=0]` takes the current row and the *two rows* before it. The length of the result is fixed by the range itself.
+* **Position** - the range counts elements. `values[1..3]` takes the elements *at* positions 1 and 2. A window frame `p[-2..=0]` takes the current row and the *two rows* before it. The length of the result is fixed by the range itself.
 * **Value** - the range selects by the magnitude of some ordered value. "Every order whose day falls within the previous week" may match any number of rows.
 
 For a plain vector these two coincide, because an element's position *is* effectively its coordinate. They diverge the moment the axis is something other than a dense position - most visibly in a window ordered by a value like a date, where "the previous 3 rows" and "the previous 3 days" are genuinely different questions.
 
 QL keeps both available and distinguishes them by what the range is written against:
 
-* A range of bare offsets - `[-2..=0]` - counts by **position**.
-* A range written in terms of an ordered value - `[o.day - 6 ..= o.day]` - counts by **value**.
+* A range of bare offsets - `p[-2..=0]` - counts by **position**.
+* A range written in terms of an ordered value - `p[o.day - 6 ..= o.day]` - counts by **value**.
 
-The two forms even line up shape-for-shape. A running frame over positions is `[..=0]` (from the start through the current row); the same running frame over a value is `[..= o.day]` (from the start through the current row's value). Same range, different axis. This is developed further in [Windows](./queries.md#windows).
+The two forms even line up shape-for-shape. A running frame over positions is `p[..=0]` (from the start through the current row); the same running frame over a value is `p[..= o.day]` (from the start through the current row's value). Same range, different axis. This is developed further in [Windows](./queries.md#windows).

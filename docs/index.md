@@ -86,4 +86,5 @@ View the [Quick Start](./quick-start.md) if you just want to get a feel for the 
 13. [Functions](./functions.md)
     * [Non-scalar thinking](./functions.md#non-scalar-thinking)
     * [Varargs](./functions.md#varargs)
-14. [Generics](./generics.md)
+14. [Aggregate functions](./aggregates.md)
+15. [Generics](./generics.md)

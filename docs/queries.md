@@ -385,6 +385,8 @@ Here is a list of common aggregate methods, each called on the collection:
 * `product` - the product of the values in the collection (numeric)
 * `joined` - the values in the collection joined together into a string, separated by a separator
 
+> This set is open, not fixed - each is an aggregator value passed to a universal `reduce`, with a sugar method for convenience. See [Aggregate functions](./aggregates.md) for how aggregators are defined, extended, and translated per backend.
+
 > **NOTE:** One curiosity of `aggregate` is that you can apply collection operations on an alias. In the other operations we explored previously, an alias refers to a single value in a collection. In `aggregate`, the same alias now refers to an entire collection! Any filtering applied to the collection up to that point is accounted for when aggregating the values.
 
 ## Ordering
@@ -433,97 +435,87 @@ select v; # [1, 2, 3]
 ```
 
 ## Windows
-A `window` computes a value *for each row* using a set of related rows around it - called a *frame* - without collapsing rows the way a `group by` does. Where a `group by` turns many rows into one row per group, a window keeps every row and simply attaches a computed value to it.
+A window computes a value *for each row* using a set of related rows around it, without collapsing rows the way a `group by` does. Where a `group by` turns many rows into one row per group, a window keeps every row and attaches a computed value to it.
 
-Because of this, a window fits naturally into the same slot as a `let`: it *adds* a value to each row while leaving every prior alias in scope. Contrast this with `group by`, which replaces the scope entirely (see the [note below](#windows-and-scope)).
+Windowing starts with the `partition by` operation. Unlike `group by`, it does *not* collapse rows; instead, it gives each row access to its *partition* - the collection of rows sharing the same key - bound to an alias. Within the query you then have two things available at once:
 
-A window is built from up to three parts:
+* `o` - the current row (an `Order`), as in any other query.
+* `p` - the partition: a *collection* of the orders that share this order's `customerId`.
 
-* `partition by` - splits rows into independent partitions. This is like `group by`, except the rows are *not* collapsed; the window simply restarts at each partition boundary.
-* `order by` - orders the rows within each partition. This is required for anything running, ranking, or offset-based.
-* a *frame* - the subset of the partition that a given row can see, written as a slice relative to the current row.
-
-The frame reuses the same slice syntax used elsewhere (see [Splicing](./in-memory-sources.md#splicing)). The current row is offset `0`, preceding rows are negative, and following rows are positive. Open-ended ranges reach to the start or end of the partition:
-
-* `[..=0]` - from the start of the partition through and including the current row (a *running* frame)
-* `[-2..=0]` - the current row and the two preceding it (a trailing frame of three)
-* `[0..]` - the current row through the end of the partition
-* `[..]` - the entire partition
-
-Here we compute a running total and a three-row moving average of order amounts for each customer:
 ```
 from orders as o
-partition by o.customerId
-order by o.date
-let runningTotal = o.amount.sum() over [..=0]
-let movingAvg = o.amount.average() over [-2..=0]
-select { ...o, runningTotal, movingAvg };
-```
-
-Because the current row is `0`, and `..=` includes its endpoint, `[..=0]` covers every row from the start of the partition through the current one - a running total. Note that all of `o`'s properties remain available; the window only *adds* `runningTotal` and `movingAvg`.
-
-A frame covering the whole partition (`[..]`) reduces the partition to a single value and shares it back across every row. This is handy for computing each row's share of a total:
-```
-from orders as o
-partition by o.customerId
-let share = o.amount / (o.amount.sum() over [..])
+partition by o.customerId as p
+let share = o.amount / p.amount.sum()
 select { ...o, share };
 ```
 
-> **NOTE:** A whole-partition frame does not require an `order by`, since the frame is the same regardless of order. A running or trailing frame does require one, so the "preceding" and "following" rows are well-defined.
+This computes each order's share of its customer's total. Both aliases are at work: `o.amount` is *this row's* amount (a scalar), while `p.amount.sum()` sums across the whole partition (`p.amount` projects the amount of every order in `p`, and `.sum()` reduces it). Because `p` is plainly a collection and `o` is plainly a row, the expression says what it means.
 
-Ranking is expressed as a running count. Since `o.count()` over a running frame increases by one for each row, it produces a row number within the partition:
+> **NOTE:** `partition by` *adds* the partition alias without collapsing rows or removing any existing alias. This is the crucial difference from `group by`, which replaces the current row with a group (see [Windows and scope](#windows-and-scope)).
+
+### Frames
+A whole-partition aggregate like `p.amount.sum()` uses every row in the partition. More often you want a *frame*: a subset of the partition relative to the current row, such as "the last three orders" or "everything up to now." A frame is simply a [slice](./ranges.md#ranges-as-indexes) of the partition.
+
+When a partition alias is indexed, the offsets are measured *relative to the current row*: `p[0]` is the current row (the same order as `o`), negative offsets are preceding rows, and positive offsets are following rows. This requires an `order by`, so that "preceding" and "following" are well-defined.
+
 ```
 from orders as o
-partition by o.customerId
+partition by o.customerId as p
 order by o.date
-let rowNumber = o.count() over [..=0]
-select { ...o, rowNumber };
+let runningTotal = p[..=0].amount.sum()       # start of partition through the current row
+let movingAvg    = p[-2..=0].amount.average()  # the current row and the two before it
+let rowNumber    = p[..=0].count()             # a running count
+select { ...o, runningTotal, movingAvg, rowNumber };
 ```
+
+Each frame is an ordinary slice:
+
+* `p[..=0]` - from the start of the partition through the current row (a *running* frame).
+* `p[-2..=0]` - the current row and the two preceding it (a trailing frame of three).
+* `p[0..]` - the current row through the end of the partition.
+* `p[..]` - the entire partition (the same as `p` with no index).
+
+Because a frame is just a sliced collection, you aggregate it with the same methods as any other collection - `.sum()`, `.average()`, `.count()`, and so on. There is no special windowing operator: a "window" is simply a `let` that slices and aggregates the partition.
 
 ### Offsets
-A frame that selects a *single* row returns that row's value directly, rather than a collection. This is how you look at a neighboring row (what SQL calls `lag` and `lead`):
+Indexing a partition with a *single* offset returns that one row, rather than a collection - which is how you look at a neighboring row (what SQL calls `lag` and `lead`):
 ```
 from orders as o
-partition by o.customerId
+partition by o.customerId as p
 order by o.date
-let previousAmount = o.amount over [-1]  # the prior order's amount, or null at the partition's first row
+let previousAmount = p[-1]?.amount  # the prior order's amount
 select { ...o, previousAmount };
 ```
 
-At the edges of a partition, a neighboring row may not exist. In that case the value is `null`, and the usual [null-safety rules](#null-safety) apply - so `previousAmount` above is inferred as nullable, and must be checked or defaulted (e.g., with `??`) before use.
+At the edges of a partition a neighboring row may not exist - `p[-1]` is `null` at the first row - so the usual [null-safety rules](#null-safety) apply. That is why `p[-1]?.amount` uses `?.`, and `previousAmount` is inferred as nullable.
 
 ### Row frames vs. value frames
-The frames shown so far count *rows*: the offset `-2` means "two rows back," so `[-2..=0]` is always exactly three rows. Sometimes you instead want a frame defined by the *ordering value* - for example, "every order within the previous week," which may match any number of rows (including none). These two interpretations are genuinely different, and conflating them is a common source of confusion in SQL (its `ROWS` vs. `RANGE`).
+The frames above count *rows*: the offset `-2` means "two rows back," so `p[-2..=0]` is always exactly three rows. Sometimes you instead want a frame defined by the *ordering value* - for example, "every order within the previous week," which may match any number of rows (including none). These two interpretations are genuinely different, and conflating them is a common source of confusion in SQL (its `ROWS` vs. `RANGE`).
 
-QL distinguishes the two by what the frame is written against, with no extra keyword:
+This is exactly the [position-vs-value distinction](./ranges.md#position-vs-value) that applies to any slice, so QL distinguishes the two the same way - by what the index is written against, with no extra keyword:
 
-* A frame of bare offsets counts **rows**. `[-2..=0]` is the current row and the two rows before it.
-* A frame written in terms of the ordering expression counts by **value**. Assuming orders are ordered by an integer `day`, the following frame covers every order in the current order's week, however many that is:
+* Bare offsets slice by **position**. `p[-2..=0]` is the current row and the two rows before it.
+* An index written in terms of the ordering expression slices by **value**. Assuming orders are ordered by an integer `day`, this frame covers every order in the current order's week, however many that is:
 
 ```
 from orders as o
-partition by o.customerId
+partition by o.customerId as p
 order by o.day
-let weeklyTotal = o.amount.sum() over [o.day - 6 ..= o.day]
+let weeklyTotal = p[o.day - 6 ..= o.day].amount.sum()
 select { ...o, weeklyTotal };
 ```
 
-The rule for reading a value frame: the expressions *inside* the frame brackets are evaluated for the current row - they define the frame - while the aggregate's argument (`o.amount` above) ranges over the rows the frame selects. So `[o.day - 6 ..= o.day]` means "every order in this partition whose `day` falls between this order's `day` minus six and this order's `day`."
-
-Because a value frame selects by magnitude, all rows sharing an ordering value (peers) naturally fall in the frame together - which is usually the reason to prefer a value frame over a row frame in the first place.
+Here `o.day` is *this row's* day, so `p[o.day - 6 ..= o.day]` selects every order in the partition whose `day` falls between this order's day minus six and this order's day. Because a value frame selects by magnitude, all rows sharing an ordering value (peers) fall in the frame together - usually the reason to prefer a value frame over a row frame.
 
 Row and value frames line up shape-for-shape, differing only in axis:
 
-* `[..=0]` (row) and `[..= o.day]` (value) - a running frame, from the start of the partition through the current row.
-* `[-2..=0]` (row) and `[o.day - 2 ..= o.day]` (value) - a trailing frame.
-* `[..]` - the whole partition, which needs no anchor and so reads the same either way.
+* `p[..=0]` (row) and `p[..= o.day]` (value) - a running frame.
+* `p[-2..=0]` (row) and `p[o.day - 2 ..= o.day]` (value) - a trailing frame.
+* `p[..]` - the whole partition, the same either way.
 
-> **NOTE:** Single-offset lookups like `over [-1]` are inherently a *row* operation - they name one neighboring row - so they have no value-frame form. A value "offset" could match zero or many rows, which is what the range forms above express instead.
-
-See [Ranges](./ranges.md#position-vs-value) for the general position-vs-value distinction that underlies this.
+> **NOTE:** A single-offset lookup like `p[-1]` is inherently a *row* operation - it names one neighboring row by position - so it has no value form. A value "offset" could match zero or many rows, which is what the range forms above express instead.
 
 ### Windows and scope
-A `window` is unusual among query operations. Most operations either leave the set of available aliases untouched (like `where`), extend it (like `let` and `join`), or replace it (like `select`, `group by`, and `aggregate`). A window *extends* the scope - it adds a value while keeping every existing alias - even though, internally, it performs an aggregation over the frame.
+`partition by` is unusual among query operations. Most operations either leave the available aliases untouched (like `where`), extend them (like `let` and `join`), or replace them (like `select`, `group by`, and `aggregate`). `partition by` *extends* the scope: it adds the partition alias (`p`) while keeping the current row (`o`) and every other alias in place.
 
-This is what makes a window feel different from a `group by` despite doing similar work under the hood. A `group by` replaces the current row with a group, so prior aliases are only reachable through the group's `key` (or by iterating the group). A window keeps the row, so nothing goes out of scope; the frame it aggregates over is transient and never becomes an alias of its own. In short, a window is like a fused `group by`/`aggregate` that preserves rows instead of collapsing them.
+This is what makes windowing feel different from `group by` despite the two doing similar work. A `group by` replaces the current row with a group, so prior aliases are reachable only through the group's `key` (or by iterating the group). `partition by` keeps the row and hands you the partition alongside it, so nothing goes out of scope. A window is then just an ordinary `let` that slices and aggregates that partition - there is no separate windowing construct to learn.
