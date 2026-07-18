@@ -170,22 +170,24 @@ select c;
 ### Optionals
 QL does not allow inspecting members of a value that might be absent until you have confirmed it is present. For example, if a customer might be `None`, its orders cannot be inspected until the `Some` case is established. The `is` operator both tests the variant and binds its payload:
 ```
-from customers as customer?
-where customer is Some(c)
+from customers as c?
+where c is Some(c)
 from c.orders as o
 select o;
 ```
 
-The alias `customer` is followed by a `?`, declaring that `customer` is optional (`Customer?`) - it is an error to treat a `Customer?` as a `Customer` without first handling the absent case. `where c is Some(c)` keeps only the rows where `cusomer` is present and binds the inner value to `c`, a plain `Customer` for the rest of the query. A bound variable is usable immediately, so `where c is Some(customer) and customer.isLoyal` filters in a single clause.
+The alias `c` is followed by a `?`, declaring it optional (`Customer?`) - it is an error to treat a `Customer?` as a `Customer` without first handling the absent case. `where c is Some(c)` keeps only the rows where the value is present and rebinds `c` to the inner value - a plain `Customer` - by *shadowing* the optional. From that point on, `c` is the unwrapped customer. A bound name is usable immediately, so `where c is Some(c) and c.isLoyal` filters and narrows in one clause.
+
+> **NOTE:** Reusing the name (`Some(c)`) shadows the optional with its unwrapped value; use a fresh name (`Some(customer)`) instead if you also need the original optional. Either way, narrowing is an ordinary new binding, not a flow-sensitive re-typing of an existing variable - there is no separate rule where the compiler "just knows" `c` is non-optional within some region.
 
 Because a pattern in a `from` also filters, the same query reads even more directly by matching in the source itself:
 ```
-from customers as Some(customer)
-from customer.orders as o
+from customers as Some(c)
+from c.orders as o
 select o;
 ```
 
-Here only the present customers flow through, each already unwrapped to `customer`.
+Here only the present customers flow through, each already unwrapped to `c`.
 
 Another option is to substitute a value for the absent case rather than filtering it out:
 ```

@@ -46,7 +46,7 @@ The `T?` type is sugar for `Optional<T>`, and `None` is how absence is written. 
 * `x?.field` is `match x { Some(v) => Some(v.field), None => None }`.
 * `x!` asserts the `Some` variant, and fails if it is `None`.
 
-To test and unwrap in one step, use `is` with a pattern: `x is Some(v)` is true when `x` is present and binds `v` to the inner value for the rest of the scope, so `x is Some(v) and v > 100` filters and reuses `v` together. Use `x is Some(_)` when you only need to know it is present, `x is None` for the absent case, and `x is not None` to keep everything present without binding (see [Optionals](./queries.md#optionals)).
+To test and unwrap in one step, use `is` with a pattern: `x is Some(v)` is true when `x` is present and binds `v` to the inner value for the rest of the scope, so `x is Some(v) and v > 100` filters and reuses `v` together. Reusing the same name - `x is Some(x)` - shadows the optional with its unwrapped value, narrowing in place; this makes narrowing plain lexical shadowing rather than flow-sensitive re-typing of a variable. Use `x is Some(_)` when you only need to know it is present, `x is None` for the absent case, and `x is not None` to keep everything present without binding (see [Optionals](./queries.md#optionals)).
 
 > **NOTE:** This is how QL avoids a `null` value entirely: absence is `Optional`'s `None` variant, handled by the same `match`/`is` machinery as any other union - no special null rules, and no null-dereference class of bug.
 
