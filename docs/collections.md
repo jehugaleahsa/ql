@@ -209,6 +209,8 @@ You can think of `Optional` as a special type of vector where there is either ze
 
 Where `Optional` becomes useful is when treating it as a collection. `Optional` provides an `asIterable()` method to provide access to the many collection operations and/or treat it as a source within a query.
 
+> **NOTE:** `Optional<T>` is fundamentally the union `Some(T) | None`, and `null` is its `None` variant. The "special vector" view here is just a convenient way to treat it as a zero-or-one collection. See [Unions](./unions.md#optional-and-null).
+
 ## Set
 A set is similar to a vector except each value must be unique and the order the elements appear may not be guaranteed.
 ```

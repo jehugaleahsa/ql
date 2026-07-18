@@ -55,7 +55,7 @@ let title = match c.sex {
 Each arm is written `pattern => expression`, using the same `=>` arrow as an expression-bodied function. The `_` pattern matches anything; it is the same placeholder used elsewhere to mean "ignore" (see [Tuples](./collections.md#tuple)).
 
 ### Exhaustiveness
-A `match` must be exhaustive: every possible value of the subject must be covered by some arm, or it is a compile-time error. This guarantees a `match` always produces a value, and it means that introducing a new case forces you to handle it rather than silently falling through. A trailing `_` arm is the usual way to cover everything not named explicitly.
+A `match` must be exhaustive: every possible value of the subject must be covered by some arm, or it is a compile-time error. This guarantees a `match` always produces a value, and it means that introducing a new case forces you to handle it rather than silently falling through. A trailing `_` arm is the usual way to cover everything not named explicitly. When the subject is a [union](./unions.md), the cases are its variants, so exhaustiveness means every variant must be handled.
 
 ### Patterns and capture
 Patterns can destructure structured values, such as tuples. A pattern can also *capture* the value it matched by binding it to a name with `@`:
