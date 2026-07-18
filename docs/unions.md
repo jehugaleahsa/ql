@@ -22,6 +22,8 @@ let c = Point;
 
 Each of `a`, `b`, and `c` has type `Shape`. The specific variant is remembered, but the static type is the union.
 
+Every variant's **head** - the name before any payload - is a *fresh* constructor introduced by the union; the payload, inside the parentheses, refers to an existing type. In `Circle(f64)`, `Circle` is new and `f64` is referenced. A head may not reuse a name that already exists, which resolves an otherwise ambiguous case: `let C = A | B` always declares two fresh nullary constructors `A` and `B`, so if `A` is already a type it is a compile-time error - never a union of the existing `A` and `B`. To build a union *from* existing types, wrap each in a fresh head (see [Including an existing type](#including-an-existing-type)).
+
 ## Matching
 The natural way to consume a union is [`match`](./conditionals.md#match), which destructures the payload and forces every variant to be handled:
 ```
@@ -50,21 +52,23 @@ To test and unwrap in one step, use `is` with a pattern: `x is Some(v)` is true 
 
 > **NOTE:** This is how QL avoids a `null` value entirely: absence is `Optional`'s `None` variant, handled by the same `match`/`is` machinery as any other union - no special null rules, and no null-dereference class of bug.
 
-## Unions of existing types
-A variant does not have to be a purpose-built constructor; a union can also combine existing types directly:
+## Including an existing type
+Because a variant's head is always a fresh constructor, there is no bare union of existing types such as `i32 | String`. To carry an existing type, give a variant a name and wrap the type as its payload:
 ```
-let Id = i32 | String;
+let Id = Number(i32) | Text(String);
 ```
 
-A value of type `Id` is either an `i32` or a `String`. A `match` discriminates by type:
+A value of type `Id` is a `Number` or a `Text`, and `match` unwraps by variant:
 ```
 let text = match id {
-    n: i32    => n.toString(),
-    s: String => s
+    Number(n) => n.toString(),
+    Text(s)   => s
 };
 ```
 
-Tagged variants (`Circle(f64)`) and bare type alternatives (`i32`) are the same mechanism - `|` unions types - so the two styles can even be mixed. Reach for tagged variants when the alternatives share a shape or need distinct names, and bare type unions when the alternatives are already distinct types.
+Wrapping is what keeps variants disjoint. A bare `i32 | String` could not tell two same-typed alternatives apart - imagine `f64 | f64` - and it would *flatten*, `A | A` collapsing to `A`. Named heads make every case distinct, which is also what lets `Optional<Optional<T>>` keep `Some(None)` separate from `None`. QL's unions are always *tagged*: a disjoint sum of named constructors, never a structural set-union of types.
+
+> **NOTE:** Where some languages spell an enumeration as a union of string literals (`"mon" | "tue" | ...`), QL uses nullary constructors (`Mon | Tue | ...`) - a real enum, not a bag of strings. Literals and `const` values still appear as *singleton patterns* inside a `match` (`match n { 0 => ..., _ => ... }`), but a union's *members* are always constructors, never bare values.
 
 ## Recursion and generics
 Unions may be generic and may refer to themselves, which is how recursive structures like trees are described:
