@@ -7,9 +7,9 @@ QL allows computing arithmetic on numeric primitive values.
 * `-` - Subtracts two values, such as `4 - 3` equaling `1`.
 * `*` - Multiplies two values, such as `3 * 4` equaling `12`.
 * `/` - Floating point division, such as `5 / 2` equaling `2.5`.
-* `//` - Truncated integer division, such as `5 / 2` equaling `2`.
+* `//` - Truncated integer division, such as `5 // 2` equaling `2`.
 * `**` - Exponentiation, such as `10 ** 2` equaling `100`.
-* `%` - Modulus, such as `5 / 2` equaling `1`.
+* `%` - Modulus, such as `5 % 2` equaling `1`.
 
 ## Unary math operators
 

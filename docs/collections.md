@@ -228,8 +228,8 @@ let s: Set<i32> = Set.ordered().of(1, 2, 3);
 
 If equality is not defined for a type, a comparator can be provided:
 ```
-let comparator = Hash<Customer>.using(c => c.id);
-let s: Set<i32> = Set.ordered(comparator).of(c1, c2, c3);
+let hasher = Hash<Customer>.using(c => c.id);
+let s: Set<Customer> = Set.ordered(hasher).of(c1, c2, c3);
 ```
 
 ## Map

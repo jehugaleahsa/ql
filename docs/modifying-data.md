@@ -19,7 +19,7 @@ select { firstName: "Bob", lastName: "Smith" } into values;
 Values can be updated in-place using the `update` operation:
 ```
 from values as v
-where values % 2 == 0
+where v % 2 == 0
 update v (v + 1); # produces [1, 3, 3, 5]
 ```
 
@@ -36,7 +36,7 @@ Here, we are saying replace the first name of the customer whose `id == 123` wit
 Values can also be removed in-place, using the `delete` operation:
 ```
 from values as v
-where value % 2 == 0
+where v % 2 == 0
 delete v; # produces [1, 3]
 ```
 

@@ -52,7 +52,7 @@ let second: Thing[] = [{ id: 2 }, { id: 3 }];
 let combined = 
     from first as f
     join second as s on f.id == s.id
-    select first; # -> [{ id: 2 }]
+    select f; # -> [{ id: 2 }]
 ```
 
 ## Set difference
