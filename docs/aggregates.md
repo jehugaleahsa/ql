@@ -25,7 +25,7 @@ let n     = p.count()        # sugar for p.reduce(Count)
 > **NOTE:** The sugar methods are defined in terms of `reduce` - they add nothing you could not write yourself. This keeps the common case readable while leaving the set of aggregators open. It also means the set of "keywords" is really just a standard library of aggregator values.
 
 ## The Aggregate trait
-An aggregator is any type that implements the `Aggregate` trait - an associative fold with a finishing step (a monoid with a finisher, or what some languages call a "collector"):
+An aggregator is a *value* whose type implements the `Aggregate` trait - an associative fold with a finishing step (a monoid with a finisher, or what some languages call a "collector"):
 ```
 let Aggregate<In, Acc, Out> = trait {
     fn init(): Acc;                    # the starting accumulator
@@ -49,7 +49,7 @@ impl Aggregate<f64, f64, f64> for Sum {
 };
 ```
 
-Other primitives follow the same shape: `Count` steps by one per element and combines by adding, and `Median` collects the values and picks the middle in `finish`.
+Other primitives follow the same shape: `Count` steps by one per element and combines by adding, and `Median` collects the values and picks the middle in `finish`. A stateless aggregator like `Sum` or `Count` is a *unit value* - `Sum` names both the empty type and its single instance, and it is that instance you pass to `reduce` (`xs.reduce(Sum)`). A parameterized aggregator such as `percentile(0.95)` is a value constructed at the call site.
 
 ## Aggregator capabilities
 `Aggregate` guarantees only associativity, which is enough to *chunk* a reduction. Two further, optional traits let the compiler do more. Both are *marker traits* - adding no methods at all; a type implements it purely to declare that a property holds.
@@ -83,39 +83,47 @@ This unlocks efficient *sliding* frames. As a trailing window like `p[-2..=0]` m
 
 A derived aggregator has a capability when all of its parts do: `Average`, built from the commutative, invertible `Sum` and `Count`, is itself commutative and invertible.
 
-## Primitive and derived aggregators
-Aggregators come in two kinds.
+## Composing aggregators
+`Aggregate` is a *trait*, not a fixed set of variants: any type can implement it, and aggregators are combined through ordinary combinators, each returning a new aggregator value. Two combinators cover the common cases, and both keep their parts as visible values, which is what lets the compiler fuse and share them.
 
-A *primitive* aggregator implements the `Aggregate` trait directly, as `Sum` does above. These are the building blocks.
-
-A *derived* aggregator is built by combining existing aggregators; it never writes its own `init`/`step`/`combine`. Three combinators cover the common cases:
-
-* **Product** - a tuple of aggregators is itself an aggregator. It runs them together in a single pass and yields a tuple of their results, so `(Sum, Count)` produces `(f64, usize)`.
-* **Output map** - `agg.map(finisher)` transforms an aggregator's result after it finishes.
-* **Input map** - `agg.on(projection)` adapts what an aggregator reads from each element, so that sub-aggregators of a product can read the same element differently.
-
-`Average` is the canonical derived aggregator: run `Sum` and `Count` together, then divide. It returns `f64?` - an empty collection has a count of zero, so the finisher yields `None` rather than dividing by zero:
+### Compound
+`Compound` takes a record of aggregators and a finisher, and returns an aggregator that runs them all in a single pass:
 ```
-let Average = (Sum, Count).map(fn(acc) =>
-    if acc._1 == 0 { None } else { acc._0 / acc._1 as f64 }
+let Average = Compound(
+    { sum: Sum, count: Count },
+    fn(a) => if a.count == 0 { None } else { a.sum / a.count as f64 }
 );
 ```
 
-`Variance` uses all three combinators, computing the mean of the squares and the square of the mean in a single pass, and guards the empty case the same way:
+The record `{ sum: Sum, count: Count }` is ordinary data - a record whose fields happen to be aggregator values. It becomes an aggregator only because `Compound` wraps it, and that `Compound(...)` is the signal: no guessing whether a bare record is data or a reducer. `Compound` folds each field over the elements, collects the results into a record with the *same field names* (`{ sum, count }`), and hands that to the finisher, which returns the final value - here `f64?`, guarding the empty count. That intermediate record is the same shape as the [`aggregate`](./queries.md#aggregation) block in a query, and a field of a `Compound` may itself be a `Compound`, so aggregators nest freely.
+
+### Projected
+`Projected` adapts what a *single* aggregator reads: each element is passed through a projection *before* the aggregator folds it - it transforms the *input* to `step`, never its result:
 ```
-let Variance =
-    (Sum.on(fn(x) => x * x), Sum, Count).map(fn(acc) => {
-        let (sumSq, sum, n) = acc;
-        if n == 0 { None } else {
-            let nf = n as f64;
-            sumSq / nf - (sum / nf) ** 2
-        }
-    });
+let SumOfSquares = Sum.before(fn(x) => x * x);
+# [1, 2, 3].reduce(SumOfSquares) == 14   (1 + 4 + 9)
+```
+`Sum` itself is unchanged; `before` squares each element on the way in. `agg.before(projection)` is sugar for `Projected(projection, agg)` - and because `agg` is unambiguously an aggregator value, the method form is safe here even though `Compound` needs the explicit constructor.
+
+`Projected` earns its keep inside a `Compound`, where every field sees the *same* element but each may need a different view of it in one pass. `Variance` sums the values and their squares together:
+```
+let Variance = Compound(
+    { sumSq: Sum.before(fn(x) => x * x), sum: Sum, count: Count },
+    fn(a) => if a.count == 0 { None } else {
+        let n = a.count as f64;
+        a.sumSq / n - (a.sum / n) ** 2
+    }
+);
 ```
 
 > **NOTE:** Because their finishers can yield `None`, `Average` and `Variance` produce `f64?`. Any aggregator that divides by a count should guard the empty collection this way; the [optional rules](./queries.md#optionals) then carry the `None` through any downstream expression.
 
-Deriving aggregators is more than convenience. Because a derived aggregator is built from visible parts, the compiler can *share* those parts. When an [`aggregate`](./queries.md#aggregation) block requests `sum`, `count`, and `average` together, it can see that `Average` is made of the same `Sum` and `Count` as the standalone fields, and maintain just one running sum and one running count for all three. A monolithic `Average` that hid its own sum and count would force a second, redundant pair. This is why the standard library favors deriving aggregators from smaller ones rather than writing each from scratch.
+### Why derived aggregators stay cheap
+Two properties fall out of building aggregators from visible parts.
+
+**No runtime map.** A Compound is conceptually a map from field names to sub-aggregators, but those names are compile-time literals, so nothing is a runtime `Map`. The parts lower to a fixed record (a struct with fields `sum`, `count`, and so on), and the running accumulator is a record of the sub-accumulators. `step` and `combine` delegate field by field, and `finish` calls each sub-finisher and then the compound finisher - all statically, with no hashing and no per-element allocation beyond the fixed accumulator.
+
+**Shared work.** Because the parts are visible values, the compiler can share them. When an [`aggregate`](./queries.md#aggregation) block requests `sum`, `count`, and `average` together, it sees that `Average`'s `Sum` and `Count` are the same aggregators as the standalone fields and keeps a single running sum and count for all three. An opaque aggregator that hid its own sum and count would force a redundant second pair - which is why the standard library builds aggregators by composition.
 
 ## Backends
 Because an aggregator is an ordinary value, a backend can treat it as data:
