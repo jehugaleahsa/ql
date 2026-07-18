@@ -64,28 +64,52 @@ let customer: Customer = {
 ```
 
 ## Traits
-Entity declarations using the `type` keyword can also be referred to as "traits". In order to share properties and methods across related entities, traits can be combined.
+A *trait* describes behavior: a set of methods a type can provide. Traits are how QL shares behavior across types, taking the place of the inheritance found in object-oriented languages.
 
-For example, let's define a common trait for all entities mapping to a database, giving them an `id` property:
+A trait is declared with `type`, listing the methods it requires. It may also supply *default* methods, written in terms of the required ones:
 ```
-let DBModel = type {
-    id: i32?
+let Comparable<T> = type {
+    fn compareTo(other: T): i32;      # required
+    fn lessThan(other: T): bool {     # default - built on compareTo
+        compareTo(other) < 0
+    }
 };
 ```
 
-Now we can redefine `Customer` to be a type of `DBModel`:
+A type opts into a trait with an `impl` block, supplying the required methods. The defaults then come for free:
 ```
-let Customer = type DBModel {
+let Version = type {
+    major: i32,
+    minor: i32
+};
+
+impl Comparable<Version> for Version {
+    fn compareTo(other: Version): i32 {
+        # ...compare major, then minor
+    }
+};
+```
+
+`Version` now has both `compareTo` and `lessThan`, even though it only implemented `compareTo`. Implementing a small required core to unlock a larger set of operations is the central pattern of the trait system - the [collection traits](./collections.md#common-collection-traits) work the same way, where implementing `iterator()` unlocks the rest.
+
+A type can implement as many traits as it likes, each in its own `impl` block:
+```
+let Customer = type {
+    id: i32?,
     name: String,
     address: Address
 };
+
+impl Comparable<Customer> for Customer { ... }
+impl Serializable for Customer { ... }
 ```
 
-Zero, one, or more traits can be listed after the `type` keyword, separated by commas.
+> **NOTE:** QL has no classical inheritance. A type is never a subtype of another; it simply *implements* traits. Shared behavior comes from traits and their default methods, not from a class hierarchy - which sidesteps the fragile-base-class and diamond problems inheritance is prone to.
 
-In the example above, since `DBModel` already defines an `id` property, it does not need to be repeated in `Customer`.
+### Where an `impl` may be written
+So that trait resolution is never ambiguous, QL enforces one rule (Rust calls it the *orphan rule*): an `impl Trait for Type` is allowed only if **you define the trait, or you define the type**, in the same module. You can implement your own trait for someone else's type, or someone else's trait for your own type - but never a foreign trait for a foreign type.
 
-> **NOTE:** QL doesn't support the classical notion of inheritance, as found in object-oriented programming languages. Many of the more useful features are supported, however.
+This guarantees there is at most one implementation of a given trait for a given type anywhere in a program, so behavior never depends on which modules happen to be imported. When you need to bridge two things you don't own, define a small trait of your own and implement it for the foreign type, or wrap that type in one of yours.
 
 ## Anonymous types
 Within [queries](./queries.md), defining anonymous types is quite common. For example:

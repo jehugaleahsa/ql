@@ -24,29 +24,69 @@ let n     = p.count()        # sugar for p.reduce(Count)
 
 > **NOTE:** The sugar methods are defined in terms of `reduce` - they add nothing you could not write yourself. This keeps the common case readable while leaving the set of aggregators open. It also means the set of "keywords" is really just a standard library of aggregator values.
 
-## The Aggregate interface
-An aggregator implements a small interface: an associative fold with a finishing step. This is the same shape as a monoid with a finisher (or what some languages call a "collector"):
+## The Aggregate trait
+An aggregator is any type that implements the `Aggregate` trait - an associative fold with a finishing step (a monoid with a finisher, or what some languages call a "collector"):
 ```
 let Aggregate<In, Acc, Out> = type {
-    init:    fn(): Acc,           # the starting accumulator
-    step:    fn(Acc, In): Acc,    # fold one element into the accumulator
-    combine: fn(Acc, Acc): Acc,   # merge two partial accumulators
-    finish:  fn(Acc): Out         # produce the final result
+    fn init(): Acc;                    # the starting accumulator
+    fn step(acc: Acc, x: In): Acc;     # fold one element into the accumulator
+    fn combine(a: Acc, b: Acc): Acc;   # merge two partial accumulators
+    fn finish(acc: Acc): Out;          # produce the final result
 };
 ```
 
-The `combine` step is what makes an aggregator *parallelizable*. Because it is associative, the runtime is free to fold different chunks of the data independently and merge the partial results - across threads, SIMD lanes, or distributed nodes - without changing the answer.
+`combine` must be *associative*: `combine(combine(a, b), c)` must equal `combine(a, combine(b, c))`. That is what makes an aggregator *parallelizable* - the runtime can fold independent chunks of the data and merge the partials (across threads, SIMD lanes, or distributed nodes) without changing the answer.
 
-A few *primitive* examples - aggregators that implement the interface directly:
+`Sum` is a primitive aggregator that implements the trait directly:
+```
+let Sum = type {};
 
-* `Sum` - `init = fn() => 0`, `step = fn(a, x) => a + x`, `combine = fn(a, b) => a + b`, `finish = fn(a) => a`.
-* `Count` - `init = fn() => 0`, `step = fn(a, _) => a + 1`, `combine = fn(a, b) => a + b`, `finish = fn(a) => a`.
-* `Median` - accumulates all values, then computes the middle in `finish`.
+impl Aggregate<f64, f64, f64> for Sum {
+    fn init(): f64 => 0.0;
+    fn step(acc: f64, x: f64): f64 => acc + x;
+    fn combine(a: f64, b: f64): f64 => a + b;
+    fn finish(acc: f64): f64 => acc;
+};
+```
+
+Other primitives follow the same shape: `Count` steps by one per element and combines by adding, and `Median` collects the values and picks the middle in `finish`.
+
+## Aggregator capabilities
+`Aggregate` guarantees only associativity, which is enough to *chunk* a reduction. Two further, optional traits let the compiler do more. Both are *marker traits* - adding no methods at all; a type implements it purely to declare that a property holds.
+
+### Commutative
+`Commutative` declares that `combine(a, b) == combine(b, a)` - order does not matter:
+```
+impl Commutative for Sum {}   # Sum is order-independent
+```
+
+Associativity lets you combine chunks; commutativity lets you combine them *in any order*. A non-commutative aggregator (`Joined`, `First`, `Last`) is still parallelizable - its partials just have to be merged left to right.
+
+This is the property that decides whether an aggregator can run on an *unordered* collection. Reducing an unordered collection - a [set](./collections.md#set) or an unordered partition - requires `Commutative`, since otherwise the result would depend on an order that is not defined. Reducing an *ordered* collection requires only `Aggregate`. The gate is a trait bound, so `someSet.reduce(Joined)` is a compile-time error while `someSet.reduce(Sum)` is fine.
+
+| aggregator | `Commutative`? | valid on unordered collections |
+|---|---|---|
+| `Sum`, `Count`, `Min`, `Max`, `Median` | yes | yes |
+| `Joined`, `First`, `Last` | no | no - ordered only |
+
+> **NOTE:** The safe default is *non*-commutative: an aggregator is order-sensitive unless it implements `Commutative`. That way a user-defined aggregator that forgets to opt in is rejected on unordered data rather than silently producing a nondeterministic result.
+
+### Invertible
+`Invertible` declares that an element can be *removed* from an accumulator, not just added:
+```
+impl Invertible for Sum { 
+    fn uncombine(acc: f64, x: f64): f64 => acc - x;
+}
+```
+
+This unlocks efficient *sliding* frames. As a trailing window like `p[-2..=0]` moves across a partition, an invertible aggregator can add the entering element and subtract the leaving one in O(1) per step, instead of re-reducing the whole frame. `Sum` and `Count` are invertible; `Max` and `Min` are not (you cannot cheaply recover the previous maximum once it leaves), so their sliding frames fall back to re-reduction.
+
+A derived aggregator has a capability when all of its parts do: `Average`, built from the commutative, invertible `Sum` and `Count`, is itself commutative and invertible.
 
 ## Primitive and derived aggregators
 Aggregators come in two kinds.
 
-A *primitive* aggregator implements the interface directly, as `Sum` and `Count` do above. These are the building blocks.
+A *primitive* aggregator implements the `Aggregate` trait directly, as `Sum` does above. These are the building blocks.
 
 A *derived* aggregator is built by combining existing aggregators; it never writes its own `init`/`step`/`combine`. Three combinators cover the common cases:
 

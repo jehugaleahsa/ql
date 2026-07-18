@@ -128,13 +128,10 @@ Many functions are designed to return `null` when passed `null` values. Arithmet
 
 ## Common collection traits
 
-* `Iterable<T>` - Indicates that the elements of the collection can be iterated over.
-    * `iterator()` - Gets an iterator that returns `Optional<T>`, returning `null` when exhausted. The underlying collection controls the order the items are returned.
-    * `count()` - Gets the number of elements in the collection. The underlying collection can optimize the implementation.
-    * `where()` - Returns an iterable only containing the items matching a predicate
-    * `select()` - Return an iterable containing values mapped from the source collection using a mapping function.
-    * `flatten()` - Returns an iterable containing the flattened collections of the mapping operation.
-    * etc.
+* `Iterable<T>` - the elements can be iterated over. Implementing its one required method, `iterator()`, unlocks the rest as defaults.
+    * `iterator()` - *(required)* gets an iterator that returns `Optional<T>`, yielding `null` once exhausted. The collection controls the order the items are returned.
+    * `count()` - the number of elements. A collection may override this with a faster implementation.
+    * `reduce(agg)` - folds the elements with an [aggregator](./aggregates.md). The aggregate methods (`sum()`, `average()`, and so on) are sugar over `reduce`.
 * `Indexed<K, V>` - Allows a collection to be indexed. For example, vectors are indexed by 0-based position and maps are indexed by their keys. 
 * `Appendable<T>: Iterable<T>` - Allows a collection to be on the receiving end of an `into` (a.k.a. `insert`) operation.
     * `add(T)` - adds an item to the collection
@@ -142,14 +139,21 @@ Many functions are designed to return `null` when passed `null` values. Arithmet
     * `update(Iterator, V)` - replace the value at the given iterator location with the given value. 
 * `Deletable<T>: Iterable<T>` - Allows removing elements in-place from a collection.
     * `delete(Iterator)` - remove the value at the given iterator location.
-* `Splicable<K, V>: Indexable<K, V>, Iterable<V>` - Allows removing and adding multiple elements in-place at a particular index.
+* `Splicable<K, V>: Indexed<K, V>, Iterable<V>` - Allows removing and adding multiple elements in-place at a particular index.
+
+> **NOTE:** `Iterable` deliberately has no `where`, `select`, or `flatMap` methods. Filtering, mapping, and flattening are expressed as [queries](./queries.md) - `where`, `select`, and nested `from` - not as methods taking a lambda. The only collection operations that remain methods are the ones that need no lambda: iteration, indexing, in-place mutation, and reduction.
 
 ## Vector
-The trait for a vector looks something like this:
+A `Vector<T>` is a type that implements the core mutable-collection traits:
 ```
-let Vector<T> = type Appendable<T>, Updatable<T>, Deletable<T>, Splicable<usize, T> {
+let Vector<T> = type {
     # ...implementation details
 };
+
+impl Appendable<T> for Vector<T> { ... }
+impl Updatable<T> for Vector<T> { ... }
+impl Deletable<T> for Vector<T> { ... }
+impl Splicable<usize, T> for Vector<T> { ... }
 ```
 
 Therefore, the following two statements are identical:
@@ -160,11 +164,14 @@ let x: Vector<i32> = [1, 2, 3];
 ```
 
 ## Matrix and Array
-The underlying trait for matrix and array are the same, with compile-time dimensions:
+Matrix and array share the same underlying type, with compile-time dimensions:
 ```
-let Array2d<T, N, M> = type Updatable<T>, Splicable<usize, T> {
+let Array2d<T, N, M> = type {
     # ...implementation details
 };
+
+impl Updatable<T> for Array2d<T, N, M> { ... }
+impl Splicable<usize, T> for Array2d<T, N, M> { ... }
 ```
 
 A separate `Array` class exists for each additional dimension. Note that all the elements in a matrix/array must be the same type.
@@ -205,9 +212,13 @@ Where `Optional` becomes useful is when treating it as a collection. `Optional` 
 ## Set
 A set is similar to a vector except each value must be unique and the order the elements appear may not be guaranteed.
 ```
-let Set<T> = type Appendable<T>, Updatable<T>, Deletable<T> {
+let Set<T> = type {
     # ...implementation details
 };
+
+impl Appendable<T> for Set<T> { ... }
+impl Updatable<T> for Set<T> { ... }
+impl Deletable<T> for Set<T> { ... }
 ```
 
 Sets must be constructed using a factory method, like so:
@@ -235,16 +246,23 @@ let s: Set<Customer> = Set.ordered(hasher).of(c1, c2, c3);
 ## Map
 Maps define mappings from a unique key to a value. The entries in a Map can be ordered or unordered, similar to Sets.
 ```
-let Map<K, V> = type Indexed<K, V>, Appendable<(K, V)>, Updatable<(K, V)>, Deletable<(K, V)> {
+let Map<K, V> = type {
     # ...implementation details
 };
+
+impl Indexed<K, V> for Map<K, V> { ... }
+impl Appendable<(K, V)> for Map<K, V> { ... }
+impl Updatable<(K, V)> for Map<K, V> { ... }
+impl Deletable<(K, V)> for Map<K, V> { ... }
 ```
 
 Each entry in a Map is a key/value tuple (or pair). Maps can be inserted into, updated, or deleted using the `into`, `update`, and `delete` operations so long as those operations operate over tuples. Map exposes a `keySet()` method, as well, whose type looks like this:
 ```
-let KeySet<K> = type Deletable<K> {
+let KeySet<K> = type {
     # ...implementation details
 };
+
+impl Deletable<K> for KeySet<K> { ... }
 ```
 
 A `KeySet` is just a view over the underlying `Map`'s entries, so removing from the key set also removes from the `Map`.
