@@ -79,7 +79,7 @@ A [window](./queries.md#windows) uses a range to describe its *frame* - the set 
 from orders as o
 partition by o.customerId
 order by o.date
-let movingAvg = average(o.amount) over [-2..=0] # current row and the two before it
+let movingAvg = o.amount.average() over [-2..=0] # current row and the two before it
 select { ...o, movingAvg };
 ```
 

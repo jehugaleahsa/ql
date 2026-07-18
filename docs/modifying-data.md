@@ -46,7 +46,7 @@ Creation, modification, and deletion can be combined into a single operation:
 from customers as c
 let total = 
     from c.orders as o
-    aggregate sum(o.totalAmount)
+    aggregate o.totalAmount.sum()
 let isIncluded = total > 1000
 merge sales_totals as st on st.customerId == c.id
 when c == null && isIncluded then

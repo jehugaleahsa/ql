@@ -21,7 +21,7 @@ join orders as o on c.id == o.customerId
 group o by c as g
 aggregate {
     customer: g.key,
-    count: count(g)
+    count: g.count()
 };
 ```
 

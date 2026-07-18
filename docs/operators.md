@@ -75,19 +75,21 @@ Parentheses can be used to control precedence, such that `(2 + 3) * 5 == 25`. No
 
 * `()`
 * `x.y`
+* `f(x)`
+* `x[y]`
 * `x?.y`
 * `x?[y]`
+* `x!`
 * `checked`
 * `unchecked`
-* `x ** y`
+* `x ** y` (right-associative)
 * `+x`
 * `-x`
 * `!x`
 * `~x`
-* `^x`
-* `x..y`
-* `x..=y`
+* `x as T`
 * `x * y`
+* `x @ y`
 * `x / y`
 * `x // y`
 * `x % y`
@@ -96,16 +98,13 @@ Parentheses can be used to control precedence, such that `(2 + 3) * 5 == 25`. No
 * `x << y`
 * `x >> y`
 * `x >>> y`
-* `x < y`
-* `x > y`
-* `x <= y`
-* `x >= y`
-* `x == y`
-* `x != y`
 * `x & y`
 * `x ^ y`
 * `x | y`
+* `x < y`, `x > y`, `x <= y`, `x >= y`, `x == y`, `x != y` (non-associative; comparisons cannot be chained)
 * `x && y`
 * `x || y`
 * `x ?? y`
+* `x .. y`
+* `x ..= y`
 * `=>`

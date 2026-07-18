@@ -135,7 +135,7 @@ let loyalCustomersWithOpenOrders =
         from c.orders as o
         where o.status != 'closed'
         select o
-    where any(openOrders)
+    where openOrders.any()
     select { customer: c };
 ```
 
@@ -283,7 +283,7 @@ let usedGroupRoles =
     from groupRoles as gr
     where gr.roleId == r.id
     select gr
-where any(usedUserRoles) or any(usedGroupRoles)
+where usedUserRoles.any() or usedGroupRoles.any()
 select r;
 ```
 
@@ -337,11 +337,11 @@ For example, here's how we can count the orders for each customer:
 ```
 let customerOrderCounts =
     from customer as c
-    join order as o on c.id = o.customerId
+    join order as o on c.id == o.customerId
     group o by c as g
     aggregate {
         customer: g.key,
-        orderCount: count(g)
+        orderCount: g.count()
     };
 ```
 
@@ -354,12 +354,12 @@ As you can see, if we want to access the customer information (what we grouped b
 An `aggregate` operation can be used even without a `group by`. Consider:
 ```
 from customers as c
-aggregate count(c);
+aggregate c.count();
 ```
 
 This query returns the number of customers. The result is a single integer value.
 
-Here is a list of common aggregate functions:
+Here is a list of common aggregate methods, each called on the collection:
 
 * `count` - count the number of items in a collection
 * `any` - true if the collection is non-empty
@@ -443,8 +443,8 @@ Here we compute a running total and a three-row moving average of order amounts 
 from orders as o
 partition by o.customerId
 order by o.date
-let runningTotal = sum(o.amount) over [..=0]
-let movingAvg = average(o.amount) over [-2..=0]
+let runningTotal = o.amount.sum() over [..=0]
+let movingAvg = o.amount.average() over [-2..=0]
 select { ...o, runningTotal, movingAvg };
 ```
 
@@ -454,18 +454,18 @@ A frame covering the whole partition (`[..]`) reduces the partition to a single 
 ```
 from orders as o
 partition by o.customerId
-let share = o.amount / (sum(o.amount) over [..])
+let share = o.amount / (o.amount.sum() over [..])
 select { ...o, share };
 ```
 
 > **NOTE:** A whole-partition frame does not require an `order by`, since the frame is the same regardless of order. A running or trailing frame does require one, so the "preceding" and "following" rows are well-defined.
 
-Ranking is expressed as a running count. Since `count()` over a running frame increases by one for each row, it produces a row number within the partition:
+Ranking is expressed as a running count. Since `o.count()` over a running frame increases by one for each row, it produces a row number within the partition:
 ```
 from orders as o
 partition by o.customerId
 order by o.date
-let rowNumber = count() over [..=0]
+let rowNumber = o.count() over [..=0]
 select { ...o, rowNumber };
 ```
 
@@ -493,7 +493,7 @@ QL distinguishes the two by what the frame is written against, with no extra key
 from orders as o
 partition by o.customerId
 order by o.day
-let weeklyTotal = sum(o.amount) over [o.day - 6 ..= o.day]
+let weeklyTotal = o.amount.sum() over [o.day - 6 ..= o.day]
 select { ...o, weeklyTotal };
 ```
 
