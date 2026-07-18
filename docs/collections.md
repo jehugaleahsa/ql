@@ -146,7 +146,7 @@ Many functions are designed to return `null` when passed `null` values. Arithmet
 ## Vector
 A `Vector<T>` is a type that implements the core mutable-collection traits:
 ```
-let Vector<T> = type {
+let Vector<T> = struct {
     # ...implementation details
 };
 
@@ -166,7 +166,7 @@ let x: Vector<i32> = [1, 2, 3];
 ## Matrix and Array
 Matrix and array share the same underlying type, with compile-time dimensions:
 ```
-let Array2d<T, N, M> = type {
+let Array2d<T, N, M> = struct {
     # ...implementation details
 };
 
@@ -212,7 +212,7 @@ Where `Optional` becomes useful is when treating it as a collection. `Optional` 
 ## Set
 A set is similar to a vector except each value must be unique and the order the elements appear may not be guaranteed.
 ```
-let Set<T> = type {
+let Set<T> = struct {
     # ...implementation details
 };
 
@@ -246,7 +246,7 @@ let s: Set<Customer> = Set.ordered(hasher).of(c1, c2, c3);
 ## Map
 Maps define mappings from a unique key to a value. The entries in a Map can be ordered or unordered, similar to Sets.
 ```
-let Map<K, V> = type {
+let Map<K, V> = struct {
     # ...implementation details
 };
 
@@ -258,7 +258,7 @@ impl Deletable<(K, V)> for Map<K, V> { ... }
 
 Each entry in a Map is a key/value tuple (or pair). Maps can be inserted into, updated, or deleted using the `into`, `update`, and `delete` operations so long as those operations operate over tuples. Map exposes a `keySet()` method, as well, whose type looks like this:
 ```
-let KeySet<K> = type {
+let KeySet<K> = struct {
     # ...implementation details
 };
 

@@ -27,7 +27,7 @@ let n     = p.count()        # sugar for p.reduce(Count)
 ## The Aggregate trait
 An aggregator is any type that implements the `Aggregate` trait - an associative fold with a finishing step (a monoid with a finisher, or what some languages call a "collector"):
 ```
-let Aggregate<In, Acc, Out> = type {
+let Aggregate<In, Acc, Out> = trait {
     fn init(): Acc;                    # the starting accumulator
     fn step(acc: Acc, x: In): Acc;     # fold one element into the accumulator
     fn combine(a: Acc, b: Acc): Acc;   # merge two partial accumulators
@@ -39,7 +39,7 @@ let Aggregate<In, Acc, Out> = type {
 
 `Sum` is a primitive aggregator that implements the trait directly:
 ```
-let Sum = type {};
+let Sum = struct {};
 
 impl Aggregate<f64, f64, f64> for Sum {
     fn init(): f64 => 0.0;

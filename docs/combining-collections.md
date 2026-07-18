@@ -23,7 +23,7 @@ let combined =
 
 If the element type is not comparable, a `on` clause can be provided:
 ```
-let Thing = type {
+let Thing = struct {
     id: i32
 };
 let first: Thing[] = [{ id: 1 }, { id: 2 }];

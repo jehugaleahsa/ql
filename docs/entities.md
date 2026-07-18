@@ -1,9 +1,9 @@
 # Entities
-Beyond [primitive types](./primitive-types.md), new types can be declared, called entities. They allow grouping values together, including both primitive types and other entities.
+Beyond [primitive types](./primitive-types.md), new data types can be declared with the `struct` keyword. These are called entities: they group values together, including both primitive types and other entities.
 
 An entity is composed of named properties, and each property has a type. For example, a customer could be represented like this:
 ```
-let Customer = type {
+let Customer = struct {
     id: i32?,
     name: String,
     address: String
@@ -12,7 +12,7 @@ let Customer = type {
 
 Now imagine we realize that addresses are more complicated. We can create an entity for addresses, like so:
 ```
-let Address = type {
+let Address = struct {
     line1: String,
     line2: String?,
     municipality: String,
@@ -25,7 +25,7 @@ let Address = type {
 
 Now, we can update our `Customer` entity to look like this:
 ```
-let Customer = type {
+let Customer = struct {
     id: i32?,
     name: String,
     address: Address
@@ -66,9 +66,9 @@ let customer: Customer = {
 ## Traits
 A *trait* describes behavior: a set of methods a type can provide. Traits are how QL shares behavior across types, taking the place of the inheritance found in object-oriented languages.
 
-A trait is declared with `type`, listing the methods it requires. It may also supply *default* methods, written in terms of the required ones:
+A trait is declared with `trait`, listing the methods it requires. It may also supply *default* methods, written in terms of the required ones:
 ```
-let Comparable<T> = type {
+let Comparable<T> = trait {
     fn compareTo(other: T): i32;      # required
     fn lessThan(other: T): bool {     # default - built on compareTo
         compareTo(other) < 0
@@ -78,7 +78,7 @@ let Comparable<T> = type {
 
 A type opts into a trait with an `impl` block, supplying the required methods. The defaults then come for free:
 ```
-let Version = type {
+let Version = struct {
     major: i32,
     minor: i32
 };
@@ -94,7 +94,7 @@ impl Comparable<Version> for Version {
 
 A type can implement as many traits as it likes, each in its own `impl` block:
 ```
-let Customer = type {
+let Customer = struct {
     id: i32?,
     name: String,
     address: Address
@@ -162,3 +162,11 @@ let updated: Customer = {
 ```
 
 > **NOTE:** It's important not to mix mutable and immutable code, especially when dealing with nested objects and collections. When copying objects, a shallow copy is performed by default. This means modification to a shared object may impact every object that shares it. It's usually better to start with a design that assumes immutability and only move toward mutability once it's been shown to improve performance.
+
+## Aliases
+A plain `let` can also give an existing type another name - a type alias:
+```
+let Meter = f32;
+```
+
+There is no separate keyword for this. `struct` and `trait` introduce *new* types, and an ordinary `let` binding aliases an existing one - consistent with the rest of the language, where everything is a `let`.
