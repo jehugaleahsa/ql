@@ -37,11 +37,45 @@ let Aggregate<In, Acc, Out> = type {
 
 The `combine` step is what makes an aggregator *parallelizable*. Because it is associative, the runtime is free to fold different chunks of the data independently and merge the partial results - across threads, SIMD lanes, or distributed nodes - without changing the answer.
 
-Some examples:
+A few *primitive* examples - aggregators that implement the interface directly:
 
 * `Sum` - `init = fn() => 0`, `step = fn(a, x) => a + x`, `combine = fn(a, b) => a + b`, `finish = fn(a) => a`.
-* `Average` - accumulates a running sum and count (`Acc = (f64, usize)`), then `finish = fn(acc) => acc._0 / acc._1`. This is precisely why `average` cannot be a plain keyword but *is* a trivial aggregator.
+* `Count` - `init = fn() => 0`, `step = fn(a, _) => a + 1`, `combine = fn(a, b) => a + b`, `finish = fn(a) => a`.
 * `Median` - accumulates all values, then computes the middle in `finish`.
+
+## Primitive and derived aggregators
+Aggregators come in two kinds.
+
+A *primitive* aggregator implements the interface directly, as `Sum` and `Count` do above. These are the building blocks.
+
+A *derived* aggregator is built by combining existing aggregators; it never writes its own `init`/`step`/`combine`. Three combinators cover the common cases:
+
+* **Product** - a tuple of aggregators is itself an aggregator. It runs them together in a single pass and yields a tuple of their results, so `(Sum, Count)` produces `(f64, usize)`.
+* **Output map** - `agg.map(finisher)` transforms an aggregator's result after it finishes.
+* **Input map** - `agg.on(projection)` adapts what an aggregator reads from each element, so that sub-aggregators of a product can read the same element differently.
+
+`Average` is the canonical derived aggregator: run `Sum` and `Count` together, then divide. It returns `f64?` - an empty collection has a count of zero, so the finisher yields `null` rather than dividing by zero:
+```
+let Average = (Sum, Count).map(fn(acc) =>
+    if acc._1 == 0 { null } else { acc._0 / acc._1 as f64 }
+);
+```
+
+`Variance` uses all three combinators, computing the mean of the squares and the square of the mean in a single pass, and guards the empty case the same way:
+```
+let Variance =
+    (Sum.on(fn(x) => x * x), Sum, Count).map(fn(acc) => {
+        let (sumSq, sum, n) = acc;
+        if n == 0 { null } else {
+            let nf = n as f64;
+            sumSq / nf - (sum / nf) ** 2
+        }
+    });
+```
+
+> **NOTE:** Because their finishers can yield `null`, `Average` and `Variance` produce `f64?`. Any aggregator that divides by a count should guard the empty collection this way; the [null-safety rules](./queries.md#null-safety) then carry the `null` through any downstream expression.
+
+Deriving aggregators is more than convenience. Because a derived aggregator is built from visible parts, the compiler can *share* those parts. When an [`aggregate`](./queries.md#aggregation) block requests `sum`, `count`, and `average` together, it can see that `Average` is made of the same `Sum` and `Count` as the standalone fields, and maintain just one running sum and one running count for all three. A monolithic `Average` that hid its own sum and count would force a second, redundant pair. This is why the standard library favors deriving aggregators from smaller ones rather than writing each from scratch.
 
 ## Backends
 Because an aggregator is an ordinary value, a backend can treat it as data:
