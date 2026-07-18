@@ -1,6 +1,18 @@
 # Queries
 A query is an expression that generates a collection. Once a source is defined, it can be referenced in a query. Queries are also used to source the information needed in insert, update, and delete operations.
 
+## Terminating a query
+Every query must end with a clause that *names its result*. There are two ways to do that:
+
+* **Project** the result. `select`, `distinct`, `group by`, and `aggregate` each name the value(s) the query produces, so any of them can be the final clause.
+* **Mutate** a target. `into`, `update`, `delete`, and `merge` consume the query to change data, so they, too, can be the final clause. (See [Modifying data](./modifying-data.md).)
+
+Every other clause is a *modifier*. `from`, `join`, `where`, `let`, `skip`, `take`, `order by`, and `partition by` shape the pipeline, but each takes a predicate, key, or count rather than naming an output. A modifier can never be the last clause in a query.
+
+This is why `select c` and `distinct c` can end a query but `where c.isLoyal` cannot: `select` and `distinct` are handed the alias `c`, so they say what comes out, while `where` is handed a boolean expression that only says which records to keep. It also means `distinct c` is complete on its own - writing `distinct c select c` would just re-project what `distinct` already projected. The distinction matters most once several aliases are in scope: after a join, a trailing `where` would be ambiguous about whether the query returns the customer or the order, whereas `select` and `distinct` are explicit.
+
+> **NOTE:** This is also why `order by` cannot be the last clause (see [Ordering](#ordering)). It reorders records but names no result; the ordering exists to feed a downstream `skip`, `take`, or `select`.
+
 ## From
 A query often begins by specifying where the data comes from, using the `from` keyword. The simplest query immediately returns the values from the source using the `select` operation:
 ```
@@ -182,7 +194,7 @@ from customers as c
 distinct c;
 ```
 
-> **NOTE:** `distinct` can be the last operation in a query, no `select` required!
+> **NOTE:** `distinct` can be the last operation in a query, no `select` required - it names its output (`c`) just as `select` would. See [Terminating a query](#terminating-a-query).
 
 In the example above, what if we wanted to base uniqueness by first name only? In that case, the `on` keyword can be used:
 ```
@@ -383,7 +395,7 @@ order by v
 select v; # [1, 2, 3]
 ```
 
-> **NOTE:** An `order by` operation cannot be the last operation in a query!
+> **NOTE:** An `order by` operation cannot be the last operation in a query - it names no result (see [Terminating a query](#terminating-a-query)).
 
 Sorting can refer to specific fields, as well:
 ```
