@@ -133,13 +133,13 @@ Many functions are designed to return `null` when passed `null` values. Arithmet
     * `count()` - the number of elements. A collection may override this with a faster implementation.
     * `reduce(agg)` - folds the elements with an [aggregator](./aggregates.md). The aggregate methods (`sum()`, `average()`, and so on) are sugar over `reduce`.
 * `Indexed<K, V>` - Allows a collection to be indexed. For example, vectors are indexed by 0-based position and maps are indexed by their keys. 
-* `Appendable<T>: Iterable<T>` - Allows a collection to be on the receiving end of an `into` (a.k.a. `insert`) operation.
+* `Appendable<T>` - Allows a collection to be on the receiving end of an `into` (a.k.a. `insert`) operation. Requires `Iterable<T>`.
     * `add(T)` - adds an item to the collection
-* `Updatable<T>: Iterable<T>` - Allows a collection be updated in-place using an `update` operation.
+* `Updatable<T>` - Allows a collection to be updated in-place using an `update` operation. Requires `Iterable<T>`.
     * `update(Iterator, V)` - replace the value at the given iterator location with the given value. 
-* `Deletable<T>: Iterable<T>` - Allows removing elements in-place from a collection.
+* `Deletable<T>` - Allows removing elements in-place from a collection. Requires `Iterable<T>`.
     * `delete(Iterator)` - remove the value at the given iterator location.
-* `Splicable<K, V>: Indexed<K, V>, Iterable<V>` - Allows removing and adding multiple elements in-place at a particular index.
+* `Splicable<K, V>` - Allows removing and adding multiple elements in-place at a particular index. Requires `Indexed<K, V>` & `Iterable<V>`.
 
 > **NOTE:** `Iterable` deliberately has no `where`, `select`, or `flatMap` methods. Filtering, mapping, and flattening are expressed as [queries](./queries.md) - `where`, `select`, and nested `from` - not as methods taking a lambda. The only collection operations that remain methods are the ones that need no lambda: iteration, indexing, in-place mutation, and reduction.
 

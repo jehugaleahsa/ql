@@ -111,6 +111,29 @@ So that trait resolution is never ambiguous, QL enforces one rule (Rust calls it
 
 This guarantees there is at most one implementation of a given trait for a given type anywhere in a program, so behavior never depends on which modules happen to be imported. When you need to bridge two things you don't own, define a small trait of your own and implement it for the foreign type, or wrap that type in one of yours.
 
+### Composing traits
+A trait can require other traits by intersecting them with `&`. An implementor must satisfy every part:
+```
+let Appendable<T> = trait
+    & Iterable<T>
+    & {
+        fn add(item: T);
+        fn isEmpty(): bool { count() == 0 }   # default - count() comes from Iterable
+    };
+```
+
+To `impl Appendable<T> for X`, the compiler checks that `X` also implements `Iterable<T>` - you cannot be `Appendable` without being `Iterable`. In return, `Appendable`'s own default methods, and any code bounded by `Appendable`, may call the required traits' methods, like `count()` above.
+
+The parts are joined with `&`, read as "and": a value satisfying `A & B` implements both. A trait's own members are written as an anonymous `& { ... }` block, so a trait is uniformly an intersection of the traits it requires and the members it introduces. Leading `&` operators are allowed, so each part lines up on its own line; the same reads fine inline: `trait Iterable<T> & { fn add(item: T); }`.
+
+When a trait adds nothing of its own - it just bundles others under a name - drop the `trait` keyword and the block, and a plain `let` aliases the intersection:
+```
+let ReadWrite = Readable & Writable;
+```
+Any type that is both `Readable` and `Writable` is a `ReadWrite`, with no separate `impl` required - the same way `let Meter = f32` aliases an existing type.
+
+> **NOTE:** `&` intersects: a value must implement all parts. It is the composition counterpart to `|` (union), which will describe a value that is one of several types, once union types are added.
+
 ## Anonymous types
 Within [queries](./queries.md), defining anonymous types is quite common. For example:
 ```
