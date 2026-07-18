@@ -395,13 +395,13 @@ select c;
 ## Skip
 The `skip` operation skips either a specific number of values in a query or while a condition persists:
 ```
-from 1..10 as v:
+from 1..10 as v
 skip 3
 select v; # [4, 5, 6, 7, 8, 9]
 ```
 or
 ```
-from 1..10 as v:
+from 1..10 as v
 skip v < 4
 select v; # [4, 5, 6, 7, 8, 9]
 ```
@@ -409,13 +409,13 @@ select v; # [4, 5, 6, 7, 8, 9]
 ## Take
 The `take` operation takes a specific number of values in a query or while a condition persists:
 ```
-from 1..10 as v:
+from 1..10 as v
 take 3
 select v; # [1, 2, 3]
 ```
 or
 ```
-from 1..10 as v:
+from 1..10 as v
 take v < 4
 select v; # [1, 2, 3]
 ```
