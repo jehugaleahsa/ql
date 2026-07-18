@@ -77,8 +77,8 @@ See [Splicing](./in-memory-sources.md#splicing) for more on slicing collections.
 A [window](./queries.md#windows) slices a *partition* - the collection of related rows, bound with `partition by ... as p` - to produce the *frame* a computation sees. In this position the slice is measured relative to the current row rather than to position `0`:
 ```
 from orders as o
-partition by o.customerId as p
 order by o.date
+partition by o.customerId as p
 let movingAvg = p[-2..=0].amount.average() # current row and the two before it
 select { ...o, movingAvg };
 ```

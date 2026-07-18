@@ -454,21 +454,23 @@ This computes each order's share of its customer's total. Both aliases are at wo
 > **NOTE:** `partition by` *adds* the partition alias without collapsing rows or removing any existing alias. This is the crucial difference from `group by`, which replaces the current row with a group (see [Windows and scope](#windows-and-scope)).
 
 ### Frames
-A whole-partition aggregate like `p.amount.sum()` uses every row in the partition. More often you want a *frame*: a subset of the partition relative to the current row, such as "the last three orders" or "everything up to now." A frame is simply a [slice](./ranges.md#ranges-as-indexes) of the partition.
+A whole-partition aggregate like `p.amount.sum()` uses every row in the partition and does not depend on order. More often you want a *frame*: a subset of the partition relative to the current row, such as "the last three orders" or "everything up to now." A frame is simply a [slice](./ranges.md#ranges-as-indexes) of the partition.
 
-When a partition alias is indexed, the offsets are measured *relative to the current row*: `p[0]` is the current row (the same order as `o`), negative offsets are preceding rows, and positive offsets are following rows. This requires an `order by`, so that "preceding" and "following" are well-defined.
+A frame is only meaningful when the partition has an order, so that "preceding," "following," and position are defined. You establish that order by sorting *before* partitioning. `partition by` is *stable*: it preserves the order the rows are already in, so partitioning an ordered stream yields ordered partitions.
 
 ```
 from orders as o
-partition by o.customerId as p
 order by o.date
+partition by o.customerId as p
 let runningTotal = p[..=0].amount.sum()       # start of partition through the current row
 let movingAvg    = p[-2..=0].amount.average()  # the current row and the two before it
 let rowNumber    = p[..=0].count()             # a running count
 select { ...o, runningTotal, movingAvg, rowNumber };
 ```
 
-Each frame is an ordinary slice:
+The order matters: `order by o.date` sorts the orders, and `partition by` then splits that sorted stream into per-customer partitions, each of which is therefore in date order. Sorting *after* `partition by` would reorder the output rows but leave each partition's internal order untouched - so the sort a frame depends on must come first.
+
+When a partition alias is indexed, the offsets are measured *relative to the current row*: `p[0]` is the current row (the same order as `o`), negative offsets are preceding rows, and positive offsets are following rows. Each frame is an ordinary slice:
 
 * `p[..=0]` - from the start of the partition through the current row (a *running* frame).
 * `p[-2..=0]` - the current row and the two preceding it (a trailing frame of three).
@@ -477,12 +479,14 @@ Each frame is an ordinary slice:
 
 Because a frame is just a sliced collection, you aggregate it with the same methods as any other collection - `.sum()`, `.average()`, `.count()`, and so on. There is no special windowing operator: a "window" is simply a `let` that slices and aggregates the partition.
 
+> **NOTE:** Ordering changes the *type* of a partition, not merely its contents. Partitioning an ordered stream yields an *ordered* partition, which supports relative frames (`p[..=0]`, `p[-1]`, and the rest); partitioning an unordered stream yields an *unordered* partition, which supports only order-independent aggregates like `p.amount.sum()` over the whole partition. Asking for a relative frame on an unordered partition is a compile-time error - there is no "previous row" to refer to. This mirrors the way an ordered sequence is a distinct, more capable type than an unordered one.
+
 ### Offsets
 Indexing a partition with a *single* offset returns that one row, rather than a collection - which is how you look at a neighboring row (what SQL calls `lag` and `lead`):
 ```
 from orders as o
-partition by o.customerId as p
 order by o.date
+partition by o.customerId as p
 let previousAmount = p[-1]?.amount  # the prior order's amount
 select { ...o, previousAmount };
 ```
@@ -499,8 +503,8 @@ This is exactly the [position-vs-value distinction](./ranges.md#position-vs-valu
 
 ```
 from orders as o
-partition by o.customerId as p
 order by o.day
+partition by o.customerId as p
 let weeklyTotal = p[o.day - 6 ..= o.day].amount.sum()
 select { ...o, weeklyTotal };
 ```
