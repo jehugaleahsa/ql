@@ -50,7 +50,7 @@ let evens =
     select v;         # produces [2, 4] 
 ```
 
-> **NOTE:** A query is lazily evaluated, meaning it will not produce `[2, 4]` until the values are actually retrieved.
+> **NOTE:** A query is lazily evaluated, meaning it will not produce `[2, 4]` until the values are actually retrieved. Over an immutable source this is always safe - the source cannot change. Over a mutable source a query is a *live view*: consuming it again reflects the source's current contents. Materialize the results (for example, `let frozen = [...evens];`) when you need a stable snapshot. Note that a [mutating operation](./modifying-data.md#how-a-mutation-is-evaluated) resolves its query fully *before* writing, so it never sees its own edits.
 
 ## Splicing
 A new collection can also be created using splices. Here are some example splices:

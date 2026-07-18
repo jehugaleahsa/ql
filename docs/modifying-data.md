@@ -1,5 +1,22 @@
 # Modifying data
-In environments supporting data manipulation, QL can also be used to creating, modify, and delete data. Fortunately, the syntax for performing these operations begins with the [queries described already](./queries.md).
+In environments supporting data manipulation, QL can also be used to create, modify, and delete data. Fortunately, the syntax for performing these operations begins with the [queries described already](./queries.md).
+
+## What can be mutated
+Every mutating operation needs a *stable, addressable place to write to*. In practice that means a mutable in-memory collection (`let mut`) or a persistent store such as a database table or file - somewhere each element has a definite location. A stream of computed values has no such home: you cannot `update` or `delete` a row produced by a `select { ... }` projection, because that row is a fresh value, not a slot in a store.
+
+So `update` and `delete` may only be applied to an alias that still designates elements of a mutable source - one introduced by `from` or `join` over a mutable collection and not since replaced by a projection - and `into` must name a mutable target. If an alias no longer points at a live location, there is nowhere to write the change back to, and the operation is a compile-time error.
+
+## How a mutation is evaluated
+A mutating query always **resolves its query part completely before any change is applied**. It first works out the full set of target locations, then mutates them in a separate step, so a mutation never observes its own edits.
+
+This is a deliberate guarantee, and it is what avoids the "mutate while iterating" hazard familiar from C# and Java, where changing a collection mid-traversal corrupts the traversal. Because the targets are fixed up front, a query that mutates the very collection it reads from is well-defined:
+```
+from customerLookup as l
+where l.id == someId
+delete l;              # the matching entries are found first, then removed
+```
+
+> **NOTE:** Resolving first has a cost, and it is worth seeing plainly. In memory, fixing the target set usually means materializing it - often a copy - before writing. Implementations can make that cheaper: Java's `removeIf`, for instance, records a bitset of which elements to drop and then deletes them in a second pass, and a backend is free to choose a cheaper representation when it can prove one is safe. But the *semantics* are fixed regardless of representation - the query resolves fully, then the mutation applies. As the language matures, expect more in-place strategies that keep this guarantee while lowering the cost.
 
 ## Create
 Values can be added to a collection using the `into` keyword:
