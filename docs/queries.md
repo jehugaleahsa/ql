@@ -89,9 +89,9 @@ select Customer { ...c };
 A `select` does not need to be the last operation in a query, in which case the projected value must be given an alias:
 ```
 from customers as c
-select { customerName: c.name } as name
+select c.name as customerName
 from c.orders as o
-select { customerName: name, total: o.totalAmount };
+select { customerName: customerName, total: o.totalAmount };
 ```
 
 ### Arithmetic expressions and other computations
