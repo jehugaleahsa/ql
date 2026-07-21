@@ -1,18 +1,6 @@
 # Queries
 A query is an expression that generates a collection. Once a source is defined, it can be referenced in a query. Queries are also used to source the information needed in insert, update, and delete operations.
 
-## Terminating a query
-Every query must end with a clause that *names its result*. There are two ways to do that:
-
-* **Project** the result. `select`, `distinct`, `group by`, and `aggregate` each name the value(s) the query produces, so any of them can be the final clause.
-* **Mutate** a target. `into`, `update`, `delete`, and `merge` consume the query to change data, so they, too, can be the final clause. (See [Modifying data](./modifying-data.md).)
-
-Every other clause is a *modifier*. `from`, `join`, `where`, `let`, `skip`, `take`, `order by`, and `partition by` shape the pipeline, but each takes a predicate, key, or count rather than naming an output. A modifier can never be the last clause in a query.
-
-This is why `select c` and `distinct c` can end a query but `where c.isLoyal` cannot: `select` and `distinct` are handed the alias `c`, so they say what comes out, while `where` is handed a boolean expression that only says which records to keep. It also means `distinct c` is complete on its own - writing `distinct c select c` would just re-project what `distinct` already projected. The distinction matters most once several aliases are in scope: after a join, a trailing `where` would be ambiguous about whether the query returns the customer or the order, whereas `select` and `distinct` are explicit.
-
-> **NOTE:** This is also why `order by` cannot be the last clause (see [Ordering](#ordering)). It reorders records but names no result; the ordering exists to feed a downstream `skip`, `take`, or `select`.
-
 ## From
 A query often begins by specifying where the data comes from, using the `from` keyword. The simplest query immediately returns the values from the source using the `select` operation:
 ```
@@ -536,3 +524,15 @@ Row and value frames line up shape-for-shape, differing only in axis:
 `partition by` is unusual among query operations. Most operations either leave the available aliases untouched (like `where`), extend them (like `let` and `join`), or replace them (like `select`, `group by`, and `aggregate`). `partition by` *extends* the scope: it adds the partition alias (`p`) while keeping the current row (`o`) and every other alias in place.
 
 This is what makes windowing feel different from `group by` despite the two doing similar work. A `group by` replaces the current row with a group, so prior aliases are reachable only through the group's `key` (or by iterating the group). `partition by` keeps the row and hands you the partition alongside it, so nothing goes out of scope. A window is then just an ordinary `let` that slices and aggregates that partition - there is no separate windowing construct to learn.
+
+## Terminating a query
+Now that we've seen the full set of clauses, we can state a rule that ties them together: every query must end with a clause that *names its result*. There are two ways to do that:
+
+* **Project** the result. `select`, `distinct`, `group by`, and `aggregate` each name the value(s) the query produces, so any of them can be the final clause.
+* **Mutate** a target. `into`, `update`, `delete`, and `merge` consume the query to change data, so they, too, can be the final clause. (See [Modifying data](./modifying-data.md).)
+
+Every other clause is a *modifier*. `from`, `join`, `where`, `let`, `skip`, `take`, `order by`, and `partition by` shape the pipeline, but each takes a predicate, key, or count rather than naming an output. A modifier can never be the last clause in a query.
+
+This is why `select c` and `distinct c` can end a query but `where c.isLoyal` cannot: `select` and `distinct` are handed the alias `c`, so they say what comes out, while `where` is handed a boolean expression that only says which records to keep. It also means `distinct c` is complete on its own - writing `distinct c select c` would just re-project what `distinct` already projected. The distinction matters most once several aliases are in scope: after a join, a trailing `where` would be ambiguous about whether the query returns the customer or the order, whereas `select` and `distinct` are explicit.
+
+> **NOTE:** This is also why `order by` cannot be the last clause (see [Ordering](#ordering)). It reorders records but names no result; the ordering exists to feed a downstream `skip`, `take`, or `select`.
