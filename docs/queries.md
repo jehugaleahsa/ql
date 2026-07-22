@@ -1,5 +1,5 @@
 # Queries
-A query is an expression that generates a collection. Once a source is defined, it can be referenced in a query. Queries are also used to source the information needed in insert, update, and delete operations.
+A query is an expression that generates a collection - or, when it ends in an ungrouped `aggregate`, a single value. Aggregating *subtracts a dimension*: it turns a one-dimensional collection into a zero-dimensional scalar (and a collection of groups back into a one-dimensional collection). Once a source is defined, it can be referenced in a query. Queries are also used to source the information needed in insert, update, and delete operations.
 
 ## From
 A query often begins by specifying where the data comes from, using the `from` keyword. The simplest query immediately returns the values from the source using the `select` operation:
@@ -368,7 +368,7 @@ from customers as c
 aggregate c.count();
 ```
 
-This query returns the number of customers. The result is a single integer value.
+This query returns the number of customers. The result is a single integer value, not a one-element collection: with no `group by`, `aggregate` subtracts the collection's one dimension and leaves a scalar. This is the only terminator that produces a scalar rather than a collection.
 
 Here is a list of common aggregate methods, each called on the collection:
 
