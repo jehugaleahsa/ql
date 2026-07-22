@@ -405,6 +405,54 @@ order by c.firstName
 select c;
 ```
 
+### Multiple keys
+An `order by` can list several keys, separated by commas. Earlier keys take priority; each later key breaks ties among the records the earlier keys rank equally:
+```
+from customers as c
+order by c.lastName, c.firstName
+select c;
+```
+Customers are ordered by last name, and any who share a last name are then ordered by first name.
+
+Because every alias in scope is available, the keys can span multiple collections. After a join, `c` and `o` can be sorted on together with no special syntax:
+```
+from customers as c
+join orders as o on c.id == o.customerId
+order by c.lastName, o.total
+select { customer: c, order: o };
+```
+
+### Direction
+Keys sort ascending by default. Add `desc` after a key to sort it descending (or `asc` to sort ascending explicitly). The direction applies to that key alone:
+```
+from customers as c
+join orders as o on c.id == o.customerId
+order by c.lastName, o.total desc
+select { customer: c, order: o };
+```
+Customers are ordered by last name ascending, and within a last name their orders run from largest total to smallest.
+
+### Ordering optionals
+When a key is optional (a `T?`), the absent values (`None`) sort *last* by default. Write `None first` or `None last` after the key to choose explicitly:
+```
+from customers as c
+order by c.middleName None first
+select c;
+```
+Placement is independent of direction: `desc` reverses the order of the *present* values, while `None first`/`None last` only decides where the absent ones go. The two combine - `order by o.discount desc None first` sorts present discounts high to low and floats the missing ones to the top.
+
+> **NOTE:** `asc`, `desc`, `None first`, and `None last` are keywords *only* inside `order by`. Everywhere else they are ordinary identifiers, so a value or field named `asc` keeps working. The clause reads a key expression first, then looks for a direction and placement - so `order by asc desc` sorts a field named `asc` in descending order.
+
+### How ordering lowers
+`order by` builds a *comparator* over the current record. A key like `c.lastName` contributes two things: a selector that reads the key out of a record, and the natural `Order<T>` of the key's type, which compares two keys and returns a `Comparison` - `Less`, `Equal`, or `Greater`. Listing several keys chains their comparators: the first that returns a non-`Equal` result decides the order, which is exactly why earlier keys take priority.
+
+The modifiers are adjustments to that comparator:
+
+* `desc` reverses a key's comparator (it negates the `Comparison`).
+* `None first`/`None last` selects an `Order<T?>` that checks the variant first and delegates to the inner `Order<T>` only when both values are present.
+
+Because a comparator is an ordinary value, custom orderings can be built and reused wherever an `Order<T>` is expected; the keywords are just sugar over the common cases.
+
 ## Skip
 The `skip` operation skips either a specific number of values in a query or while a condition persists:
 ```
