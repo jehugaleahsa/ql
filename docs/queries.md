@@ -380,9 +380,9 @@ Here is a list of common aggregate methods, each called on the collection:
 * `max` - the largest value in a collection (comparable)
 * `min` - the smallest value in a collection (comparable)
 * `sum` - the sum of the values in the collection (numeric)
-* `average` - the average of the values in the collection (numeric)
+* `average` - the average of the values in the collection (optional numeric)
 * `product` - the product of the values in the collection (numeric)
-* `joined` - the values in the collection joined together into a string, separated by a separator
+* `joined` - the values in the collection joined together into a string, with an optional prefix, separator, and suffix
 
 > This set is open, not fixed - each is an aggregator value passed to a universal `reduce`, with a sugar method for convenience. See [Aggregate functions](./aggregates.md) for how aggregators are defined, extended, and translated per backend.
 
