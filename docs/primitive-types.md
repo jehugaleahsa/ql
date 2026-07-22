@@ -115,23 +115,28 @@ is also "fine"
 The string will continue until a matching number of quotes are found.
 
 ## Conversion
-Implicit conversions are disallowed. Conversions must always be explicit. 
-
-The following converts an `f64` to an `i32`:
+Implicit conversions are disallowed; every conversion is explicit. A conversion that cannot lose information uses `from`. A float-to-integer conversion is not one of these: dropping the fractional part has no single right answer (should `3.9` become `3` or `4`?), so there is no `from` for it. Instead you call the operation you mean by name, and it produces an integer:
 ```
 let f = 3.14;
-let i = f as i32; # 3 - integer truncation
+let i = f64::truncate(f); # 3 - fractional part dropped
 ```
 
-Converting a `bool` to an integer always results in `0` or `1`:
+`truncate` rounds toward zero; `f64::round`, `f64::floor`, and `f64::ceiling` are the other choices. Naming the operation is what keeps the discarded fraction from disappearing silently.
+
+A *widening* conversion, by contrast, always succeeds, so it uses `from`. Every `i32`, for example, fits in an `f64`:
 ```
-let x = true as i32;  # 1
-let y = false as i32; # 0
+let f = f64::from(3); # 3.0
 ```
 
-Going the other way, `0` converts to `false` and all other values convert to `true`, including negative values.
+Converting a `bool` to an integer always yields `0` or `1`, so it is a `from`:
+```
+let x = i32::from(true);  # 1
+let y = i32::from(false); # 0
+```
 
-A `String` can be converted to a numeric value using a `tryParse` operation:
+Going the other way is also a `from`: `0` converts to `false` and all other values convert to `true`, including negative values.
+
+A `String` can be converted to a numeric value using `tryParse`. Parsing can fail, so it yields an optional:
 ```
 let i = i32::tryParse("123");
 ```

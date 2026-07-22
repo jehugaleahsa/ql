@@ -84,7 +84,6 @@ Parentheses can be used to control precedence, such that `(2 + 3) * 5 == 25`. No
 * `-x`
 * `!x`
 * `~x`
-* `x as T`
 * `x * y`
 * `x @ y`
 * `x / y`

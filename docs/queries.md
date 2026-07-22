@@ -99,7 +99,7 @@ Within a query, expressions can include arithmetic operations or method calls, s
 ```
 from customers as c
 select { 
-    score: (100 * c.orders.count()) as f64 + (c.creditRating * 0.05) 
+    score: f64::from(100 * c.orders.count()) + (c.creditRating * 0.05) 
 };
 ```
 
@@ -107,7 +107,7 @@ select {
 Almost anywhere within a query, expressions can be broken out into smaller chunks by giving them an alias:
 ```
 from customers as c
-let orderScore = 100.0 * c.orders.count() as f64
+let orderScore = 100.0 * f64::from(c.orders.count())
 let creditScore = c.creditRating * 0.05
 let totalScore = orderScore + creditScore
 select { score: totalScore };

@@ -91,7 +91,7 @@ A derived aggregator has a capability when all of its parts do: `Average`, built
 ```
 let Average = Compound(
     { sum: Sum, count: Count },
-    fn(a) => if a.count == 0 { None } else { a.sum / a.count as f64 }
+    fn(a) => if a.count == 0 { None } else { a.sum / f64::from(a.count) }
 );
 ```
 
@@ -110,7 +110,7 @@ let SumOfSquares = Sum.before(fn(x) => x * x);
 let Variance = Compound(
     { sumSq: Sum.before(fn(x) => x * x), sum: Sum, count: Count },
     fn(a) => if a.count == 0 { None } else {
-        let n = a.count as f64;
+        let n = f64::from(a.count);
         a.sumSq / n - (a.sum / n) ** 2
     }
 );
