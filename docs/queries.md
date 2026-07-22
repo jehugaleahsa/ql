@@ -454,32 +454,35 @@ The modifiers are adjustments to that comparator:
 Because a comparator is an ordinary value, custom orderings can be built and reused wherever an `Order<T>` is expected; the keywords are just sugar over the common cases.
 
 ## Skip
-The `skip` operation skips either a specific number of values in a query or while a condition persists:
+The `skip` operation has *two forms*, chosen by the type of what follows it. Given an integer, it drops that many values from the front:
 ```
 from 1..10 as v
 skip 3
 select v; # [4, 5, 6, 7, 8, 9]
 ```
-or
+Given a boolean predicate over the alias, it instead drops values from the front for as long as the predicate holds, then keeps everything after (`skipWhile` in some languages):
 ```
 from 1..10 as v
 skip v < 4
 select v; # [4, 5, 6, 7, 8, 9]
 ```
+Once the predicate is first false, skipping stops - a later value is kept even if it would satisfy the predicate again.
 
 ## Take
-The `take` operation takes a specific number of values in a query or while a condition persists:
+The `take` operation mirrors `skip` and has the same two forms. Given an integer, it keeps that many values from the front and drops the rest:
 ```
 from 1..10 as v
 take 3
 select v; # [1, 2, 3]
 ```
-or
+Given a boolean predicate, it keeps values from the front while the predicate holds and stops at the first that fails (`takeWhile`):
 ```
 from 1..10 as v
 take v < 4
 select v; # [1, 2, 3]
 ```
+
+> **NOTE:** The count form and the predicate form are told apart purely by *type* - an integer is a count, a boolean is a predicate - so there is no ambiguity even when the values themselves are numbers or booleans. Because QL has no implicit `int`/`bool` coercion, `take 3` is always a count and `take true` is always a predicate (one that never fails, so it takes everything). For the same reason there is no "truthiness": to take while a number is non-zero, write `take v != 0`, not `take v`. And since the count is a single value computed once, before iteration, it has no access to the row alias - only the predicate form does.
 
 ## Windows
 A window computes a value *for each row* using a set of related rows around it, without collapsing rows the way a `group by` does. Where a `group by` turns many rows into one row per group, a window keeps every row and attaches a computed value to it.
