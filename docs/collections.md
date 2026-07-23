@@ -121,7 +121,7 @@ So if a `None` appears anywhere within an arithmetic expression, the whole expre
 Some conversion operations return `None` when the conversion fails:
 ```
 let bad = "12abc";      # this won't parse
-i32::tryParse(bad) + 23 # None
+i32.tryParse(bad) + 23 # None
 ```
 
 Many functions are designed to return `None` when passed `None`. Arithmetic operators are just another form of function.

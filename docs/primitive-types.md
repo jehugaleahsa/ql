@@ -118,27 +118,27 @@ The string will continue until a matching number of quotes are found.
 Implicit conversions are disallowed; every conversion is explicit. A conversion that cannot lose information uses `from`. A float-to-integer conversion is not one of these: dropping the fractional part has no single right answer (should `3.9` become `3` or `4`?), so there is no `from` for it. Instead you call the operation you mean by name, and it produces an integer:
 ```
 let f = 3.14;
-let i = f64::truncate(f); # 3 - fractional part dropped
+let i = f64.truncate(f); # 3 - fractional part dropped
 ```
 
-`truncate` rounds toward zero; `f64::round`, `f64::floor`, and `f64::ceiling` are the other choices. Naming the operation is what keeps the discarded fraction from disappearing silently.
+`truncate` rounds toward zero; `f64.round`, `f64.floor`, and `f64.ceiling` are the other choices. Naming the operation is what keeps the discarded fraction from disappearing silently.
 
 A *widening* conversion, by contrast, always succeeds, so it uses `from`. Every `i32`, for example, fits in an `f64`:
 ```
-let f = f64::from(3); # 3.0
+let f = f64.from(3); # 3.0
 ```
 
 Converting a `bool` to an integer always yields `0` or `1`, so it is a `from`:
 ```
-let x = i32::from(true);  # 1
-let y = i32::from(false); # 0
+let x = i32.from(true);  # 1
+let y = i32.from(false); # 0
 ```
 
 Going the other way is also a `from`: `0` converts to `false` and all other values convert to `true`, including negative values.
 
 A `String` can be converted to a numeric value using `tryParse`. Parsing can fail, so it yields an optional:
 ```
-let i = i32::tryParse("123");
+let i = i32.tryParse("123");
 ```
 
 The type of `i` will be `i32?`, meaning an optional integer. Learn more about `None` and optionals in the section on [None](./collections.md#none).
