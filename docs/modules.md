@@ -129,6 +129,6 @@ from package.math import sqrt;
 One vocabulary describes *where a name lives* whether you are restricting its visibility (`export(super)`) or navigating to it (`super.utils`).
 
 ## Traits and the orphan rule
-Trait implementations are not imported by name. Once a trait and a type are both in scope, the relevant [`impl`](./entities.md#traits) applies automatically - there is nothing to bring in explicitly.
+Trait implementations are not imported by name. Once a trait and a type are both in scope, the relevant [`implement` block](./entities.md#traits) applies automatically - there is nothing to bring in explicitly.
 
-This works because of the [orphan rule](./entities.md#where-an-impl-may-be-written): an `impl Trait for Type` is allowed only in the module that defines the trait or the module that defines the type. That guarantees at most one implementation of a given trait for a given type anywhere in a program, so a type's behavior never depends on which modules happen to be imported.
+This works because of the [orphan rule](./entities.md#where-an-implement-block-may-be-written): an `implement Trait for Type` is allowed only in the module that defines the trait or the module that defines the type. That guarantees at most one implementation of a given trait for a given type anywhere in a program, so a type's behavior never depends on which modules happen to be imported.

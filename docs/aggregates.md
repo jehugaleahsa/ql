@@ -41,7 +41,7 @@ let Aggregate<In, Acc, Out> = trait {
 ```
 let Sum = struct {};
 
-impl Aggregate<f64, f64, f64> for Sum {
+implement Aggregate<f64, f64, f64> for Sum {
     fn init(): f64 => 0.0;
     fn step(acc: f64, x: f64): f64 => acc + x;
     fn combine(a: f64, b: f64): f64 => a + b;
@@ -57,7 +57,7 @@ Other primitives follow the same shape: `Count` steps by one per element and com
 ### Commutative
 `Commutative` declares that `combine(a, b) == combine(b, a)` - order does not matter:
 ```
-impl Commutative for Sum {}   # Sum is order-independent
+implement Commutative for Sum {}   # Sum is order-independent
 ```
 
 Associativity lets you combine chunks; commutativity lets you combine them *in any order*. A non-commutative aggregator (`Joined`, `First`, `Last`) is still parallelizable - its partials just have to be merged left to right.
@@ -74,7 +74,7 @@ This is the property that decides whether an aggregator can run on an *unordered
 ### Invertible
 `Invertible` declares that an element can be *removed* from an accumulator, not just added:
 ```
-impl Invertible for Sum { 
+implement Invertible for Sum { 
     fn uncombine(acc: f64, x: f64): f64 => acc - x;
 }
 ```

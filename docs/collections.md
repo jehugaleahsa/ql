@@ -151,10 +151,10 @@ let Vector<T> = struct {
     # ...implementation details
 };
 
-impl Appendable<T> for Vector<T> { ... }
-impl Updatable<T> for Vector<T> { ... }
-impl Deletable<T> for Vector<T> { ... }
-impl Splicable<usize, T> for Vector<T> { ... }
+implement Appendable<T> for Vector<T> { ... }
+implement Updatable<T> for Vector<T> { ... }
+implement Deletable<T> for Vector<T> { ... }
+implement Splicable<usize, T> for Vector<T> { ... }
 ```
 
 Therefore, the following two statements are identical:
@@ -171,8 +171,8 @@ let Array2d<T, N, M> = struct {
     # ...implementation details
 };
 
-impl Updatable<T> for Array2d<T, N, M> { ... }
-impl Splicable<usize, T> for Array2d<T, N, M> { ... }
+implement Updatable<T> for Array2d<T, N, M> { ... }
+implement Splicable<usize, T> for Array2d<T, N, M> { ... }
 ```
 
 A separate `Array` class exists for each additional dimension. Note that all the elements in a matrix/array must be the same type.
@@ -219,9 +219,9 @@ let Set<T> = struct {
     # ...implementation details
 };
 
-impl Appendable<T> for Set<T> { ... }
-impl Updatable<T> for Set<T> { ... }
-impl Deletable<T> for Set<T> { ... }
+implement Appendable<T> for Set<T> { ... }
+implement Updatable<T> for Set<T> { ... }
+implement Deletable<T> for Set<T> { ... }
 ```
 
 Sets must be constructed using a factory method, like so:
@@ -253,10 +253,10 @@ let Map<K, V> = struct {
     # ...implementation details
 };
 
-impl Indexed<K, V> for Map<K, V> { ... }
-impl Appendable<(K, V)> for Map<K, V> { ... }
-impl Updatable<(K, V)> for Map<K, V> { ... }
-impl Deletable<(K, V)> for Map<K, V> { ... }
+implement Indexed<K, V> for Map<K, V> { ... }
+implement Appendable<(K, V)> for Map<K, V> { ... }
+implement Updatable<(K, V)> for Map<K, V> { ... }
+implement Deletable<(K, V)> for Map<K, V> { ... }
 ```
 
 Each entry in a Map is a key/value tuple (or pair). Maps can be inserted into, updated, or deleted using the `into`, `update`, and `delete` operations so long as those operations operate over tuples. Map exposes a `keySet()` method, as well, whose type looks like this:
@@ -265,7 +265,7 @@ let KeySet<K> = struct {
     # ...implementation details
 };
 
-impl Deletable<K> for KeySet<K> { ... }
+implement Deletable<K> for KeySet<K> { ... }
 ```
 
 A `KeySet` is just a view over the underlying `Map`'s entries, so removing from the key set also removes from the `Map`.
