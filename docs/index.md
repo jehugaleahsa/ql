@@ -101,6 +101,7 @@ View the [Quick Start](./quick-start.md) if you just want to get a feel for the 
     * [Bound generics](./generics.md#bound-generics)
     * [Constant generics](./generics.md#constant-generics)
     * [Type parameters in implementation blocks](./generics.md#type-parameters-in-implementation-blocks)
+    * [Const-ness across generics](./generics.md#const-ness-across-generics)
 19. [Modules](./modules.md)
     * [Files and folders](./modules.md#files-and-folders)
     * [Declaring submodules](./modules.md#declaring-submodules)

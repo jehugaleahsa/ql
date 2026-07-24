@@ -172,4 +172,30 @@ Constants are written in PascalCase (`MaxRetries`), the same case as types. The 
 
 > **NOTE:** `const` is about *when* a value exists, not about immutability. Ordinary `let` bindings are already immutable, so `const` is not a "more immutable `let`" - it is a value that exists at compile time rather than at runtime. This is unlike JavaScript, where `const` governs rebinding and nothing else.
 
-A constant can be declared at module level or inside any block. Building one from a user-defined type - a `Rational`, say - additionally requires that type's operations to be compile-time evaluable, which is a separate capability.
+A constant can be declared at module level or inside any block.
+
+### Const functions
+A function bound with `const` instead of `let` is a *const function* - one the compiler can evaluate at compile time:
+```
+const area = fn(w: i32, h: i32): i32 => w * h;
+```
+
+`const` means here exactly what it means for any constant - *usable at compile time* - applied to a function value. A const function is still an ordinary function and can be called at runtime like any other; binding it with `const` only adds the guarantee that it *can also* run at compile time, so it may appear in a constant's initializer or a [constant generic](./generics.md#constant-generics) argument. A function's signature is its type, so the "always typed" rule is already satisfied - there is nothing extra to annotate.
+
+The compiler enforces that everything a const function does is itself compile-time evaluable: it may call only other const functions, and may not perform I/O, read runtime-only state, or do anything nondeterministic. A `let`-bound function carries no such guarantee.
+
+Because QL has no constructors - a struct is made with literal syntax, not a constructor call - a const function that produces a struct needs nothing special; its field initializers only have to be const:
+```
+let Rational = struct { num: i32, den: i32 };
+
+const rational = fn(num: i32, den: i32): Rational => { num: num, den: den };
+
+const Half: Rational = rational(1, 2);
+```
+
+If a const function panics while being evaluated at compile time - a failed check, a division by zero, an overflow - it is a compile error, not a runtime one. Constants that are built rather than written as literals get compile-time validation for free:
+```
+const Bad: Rational = rational(1, 0);   # compile error, if `rational` rejects a zero denominator
+```
+
+Const functions can also be methods in an [`implement` block](./entities.md#traits), which is how a user-defined type exposes const behavior. Carrying that through generic code is covered in [Generics](./generics.md#const-ness-across-generics).

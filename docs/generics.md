@@ -111,3 +111,33 @@ Two conventions keep the "unresolved name is a parameter" rule from biting:
 
 * Parameters are short uppercase names (`T`, `K`, `V`, `N`, `M`); concrete types have full names. Every implement block in these docs follows this.
 * A header parameter used only once is almost always a mistyped or un-imported type name, and is flagged: *looks like a type name but is unbound - import it, or use a conventional parameter name.*
+
+## Const-ness across generics
+A [const function](./primitive-types.md#const-functions) can be generic, and a concrete type's implement block can mark individual methods `const fn`. Together these decide when generic code is compile-time evaluable - with no annotation on any trait.
+
+Const-ness is declared in exactly one place: the concrete implementation. A type controls its own const-ness by marking the methods it can evaluate at compile time:
+```
+implement Addable for Rational {
+    const fn add(other: Rational): Rational {
+        // ...
+    }
+};
+```
+
+A generic const function does not declare which of its callees are const. It is *conditionally* const - compile-time evaluable for exactly those instantiations whose type arguments supply const implementations of the methods it uses:
+```
+const twice<T> = fn(x: T): T
+    where T: Addable
+{
+    x.add(x)
+};
+```
+
+`twice(aRational)` can be evaluated at compile time, because `Rational`'s `Addable` implementation is const. Used with a type whose implementation is not const, the same call cannot:
+```
+const A = twice(aRational);   # ok
+const B = twice(aSocket);     # error: cannot evaluate at compile time -
+                              #   twice requires T.add to be const, but Socket's Addable impl is not
+```
+
+Traits say nothing about const-ness: `Addable` is a plain trait, and whether `twice` is const for a given `T` depends only on that `T`'s implementation. The price of inferring const-ness this way, rather than declaring it in signatures, is that the failure surfaces at the const *use* site for a specific type, not at `twice`'s definition. That is a deliberate trade - it keeps traits simple, it only ever affects code that opts into compile-time evaluation, and the error names the exact chain that failed. Ordinary runtime calls to `twice` are unaffected, whatever `T` is.
