@@ -155,3 +155,21 @@ If the operation overflows, the result wraps around, which will mean something d
 
 ### Unicode checks
 An integer value can be converted to a `char`; however, the compiler verifies the value represents a valid Unicode code point. At runtime, invalid code points will result in the program panicking. An operation can be wrapped in an `unchecked` expression to prevent this from happening.
+
+## Constants
+A *constant* is a named value fixed at compile time. It is declared with `const` rather than `let`, because it is not a runtime binding at all: the compiler evaluates a constant and inlines it wherever it is used.
+```
+const MaxRetries: i32 = 3;
+const Greeting: String = "Hello, world!";
+```
+
+Two rules always hold:
+
+* **A constant is always typed.** There is no surrounding context to infer from at the definition, and the type is part of the constant's contract at every site it is inlined into - so `const MaxRetries: i32 = 3;`, never `const MaxRetries = 3;`.
+* **A constant is always evaluable at compile time.** Its initializer may use literals, other constants, and operations that are themselves compile-time evaluable - never a value known only at runtime.
+
+Constants are written in PascalCase (`MaxRetries`), the same case as types. The two never compete: a type name only ever appears in a type position, a constant only in a value position. The lone place both kinds appear together - a generic argument list - is disambiguated by the declaration, which already fixes which slots are types and which are [constant generics](./generics.md#constant-generics).
+
+> **NOTE:** `const` is about *when* a value exists, not about immutability. Ordinary `let` bindings are already immutable, so `const` is not a "more immutable `let`" - it is a value that exists at compile time rather than at runtime. This is unlike JavaScript, where `const` governs rebinding and nothing else.
+
+A constant can be declared at module level or inside any block. Building one from a user-defined type - a `Rational`, say - additionally requires that type's operations to be compile-time evaluable, which is a separate capability.

@@ -52,7 +52,7 @@ let normalize = fn(x: f64): f64 => ...;     # private to this module and its des
 
 ```
 export(super) let helper = fn() => ...;
-export(package) let VERSION = "1.0.0";
+export(package) const Version: String = "1.0.0";
 ```
 
 `export` applies to submodule declarations too, controlling whether a child module is visible beyond its parent:
