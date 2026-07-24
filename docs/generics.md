@@ -5,7 +5,7 @@ Generics let a definition be written once and reused across many types. A *type 
 Type parameters are declared on the `let` name, in angle brackets, immediately after it. This is the same spot for every kind of definition, because everything is a `let`:
 ```
 let Pair<A, B> = struct { first: A, second: B };
-let Comparable<T> = trait { fn compareTo(other: T): i32; };
+let Comparable<T> = trait { let compareTo = fn(self: Self, other: T): i32; };
 let identity<T> = fn(x: T): T => x;
 ```
 
@@ -118,9 +118,9 @@ A [const function](./primitive-types.md#const-functions) can be generic, and a c
 Const-ness is declared in exactly one place: the concrete implementation. A type controls its own const-ness by marking the methods it can evaluate at compile time:
 ```
 implement Addable for Rational {
-    const fn add(other: Rational): Rational {
+    const add = fn(self: Self, other: Self): Self {
         // ...
-    }
+    };
 };
 ```
 

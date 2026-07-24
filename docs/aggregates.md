@@ -28,10 +28,10 @@ let n     = p.count()        # sugar for p.reduce(Count)
 An aggregator is a *value* whose type implements the `Aggregate` trait - an associative fold with a finishing step (a monoid with a finisher, or what some languages call a "collector"):
 ```
 let Aggregate<In, Acc, Out> = trait {
-    fn init(): Acc;                    # the starting accumulator
-    fn step(acc: Acc, x: In): Acc;     # fold one element into the accumulator
-    fn combine(a: Acc, b: Acc): Acc;   # merge two partial accumulators
-    fn finish(acc: Acc): Out;          # produce the final result
+    let init = fn(self: Self): Acc;                       # the starting accumulator
+    let step = fn(self: Self, acc: Acc, x: In): Acc;      # fold one element into the accumulator
+    let combine = fn(self: Self, a: Acc, b: Acc): Acc;    # merge two partial accumulators
+    let finish = fn(self: Self, acc: Acc): Out;           # produce the final result
 };
 ```
 
@@ -42,10 +42,10 @@ let Aggregate<In, Acc, Out> = trait {
 let Sum = struct {};
 
 implement Aggregate<f64, f64, f64> for Sum {
-    fn init(): f64 => 0.0;
-    fn step(acc: f64, x: f64): f64 => acc + x;
-    fn combine(a: f64, b: f64): f64 => a + b;
-    fn finish(acc: f64): f64 => acc;
+    let init = fn(self: Self): f64 => 0.0;
+    let step = fn(self: Self, acc: f64, x: f64): f64 => acc + x;
+    let combine = fn(self: Self, a: f64, b: f64): f64 => a + b;
+    let finish = fn(self: Self, acc: f64): f64 => acc;
 };
 ```
 
@@ -75,7 +75,7 @@ This is the property that decides whether an aggregator can run on an *unordered
 `Invertible` declares that an element can be *removed* from an accumulator, not just added:
 ```
 implement Invertible for Sum { 
-    fn uncombine(acc: f64, x: f64): f64 => acc - x;
+    let uncombine = fn(self: Self, acc: f64, x: f64): f64 => acc - x;
 }
 ```
 

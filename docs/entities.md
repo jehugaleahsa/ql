@@ -69,10 +69,10 @@ A *trait* describes behavior: a set of methods a type can provide. Traits are ho
 A trait is declared with `trait`, listing the methods it requires. It may also supply *default* methods, written in terms of the required ones:
 ```
 let Comparable<T> = trait {
-    fn compareTo(other: T): i32;      # required
-    fn lessThan(other: T): bool {     # default - built on compareTo
-        compareTo(other) < 0
-    }
+    let compareTo = fn(self: Self, other: T): i32;      # required
+    let lessThan = fn(self: Self, other: T): bool {     # default - built on compareTo
+        self.compareTo(other) < 0
+    };
 };
 ```
 
@@ -84,9 +84,9 @@ let Version = struct {
 };
 
 implement Comparable<Version> for Version {
-    fn compareTo(other: Version): i32 {
+    let compareTo = fn(self: Self, other: Version): i32 {
         # ...compare major, then minor
-    }
+    };
 };
 ```
 
@@ -117,14 +117,14 @@ A trait can require other traits by intersecting them with `&`. An implementor m
 let Appendable<T> = trait
     & Iterable<T>
     & {
-        fn add(item: T);
-        fn isEmpty(): bool { count() == 0 }   # default - count() comes from Iterable
+        let add = fn(self: Self, item: T);
+        let isEmpty = fn(self: Self): bool { self.count() == 0 }   # default - count() comes from Iterable
     };
 ```
 
 To `implement Appendable<T> for X`, the compiler checks that `X` also implements `Iterable<T>` - you cannot be `Appendable` without being `Iterable`. In return, `Appendable`'s own default methods, and any code bounded by `Appendable`, may call the required traits' methods, like `count()` above.
 
-The parts are joined with `&`, read as "and": a value satisfying `A & B` implements both. A trait's own members are written as an anonymous `& { ... }` block, so a trait is uniformly an intersection of the traits it requires and the members it introduces. Leading `&` operators are allowed, so each part lines up on its own line; the same reads fine inline: `trait Iterable<T> & { fn add(item: T); }`.
+The parts are joined with `&`, read as "and": a value satisfying `A & B` implements both. A trait's own members are written as an anonymous `& { ... }` block, so a trait is uniformly an intersection of the traits it requires and the members it introduces. Leading `&` operators are allowed, so each part lines up on its own line; the same reads fine inline: `trait Iterable<T> & { let add = fn(self: Self, item: T); }`.
 
 When a trait adds nothing of its own - it just bundles others under a name - drop the `trait` keyword and the block, and a plain `let` aliases the intersection:
 ```
